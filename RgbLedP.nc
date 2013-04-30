@@ -1,4 +1,6 @@
-// this is for csse4011
+/**
+ * TinyOS implementation of the Grove RGB LED
+ **/
 
 #include "Timer.h"
 
@@ -15,12 +17,20 @@ implementation
 {
 
   void clk() {
-    
+    //uint16_t j = 2000;
+
     // set clock low
     call ClockPin.set();
 
+    // delay
+    //while(j--) {}
+
     // set clock hihg
     call ClockPin.clr();
+
+    // delay
+    //j = 2000;
+    //while(j--) {} 
   }
   
   /** helper method **/
@@ -56,7 +66,11 @@ implementation
 
     // Start by sending a byte with the format "1 1 /B7 /B6 /G7 /G6 /R7 /R6"
     uint8_t prefix = 0b11000000;
-  
+
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00);  
     
     if ((blue & 0x80) == 0)     prefix |= 0b00100000;
     if ((blue & 0x40) == 0)     prefix |= 0b00010000; 
@@ -73,6 +87,14 @@ implementation
     sendByte(green);
     sendByte(red);
 
+    // chain resend
+    sendByte(prefix);
+
+    // send colours
+    sendByte(blue);
+    sendByte(green);
+    sendByte(red);
+
     sendByte(0x00);
     sendByte(0x00);
     sendByte(0x00);
@@ -80,3 +102,4 @@ implementation
 
   }
 }
+
