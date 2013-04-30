@@ -1,7 +1,7 @@
 // this is csse4011 stuff
 
 
-configuration BlinkTimeSyncAppC 
+configuration ProjectAppC 
 { 
 } 
 implementation { 

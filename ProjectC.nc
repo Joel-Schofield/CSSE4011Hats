@@ -3,7 +3,7 @@
 
 #include "printf.h"
 
-module BlinkTimeSyncC
+module ProjectC
 {
   uses {
     interface Boot;
