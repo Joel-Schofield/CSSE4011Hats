@@ -6,20 +6,20 @@ configuration BlinkTimeSyncAppC
 } 
 implementation { 
   
-  components BlinkTimeSyncC, MainC, new TimerMilliC() as BlinkTimerMilli;
+  components ProjectC, MainC, new TimerMilliC() as BlinkTimerMilli;
 
   // basic components
-  BlinkTimeSyncC.Boot -> MainC;
-  BlinkTimeSyncC.BlinkTimer -> BlinkTimerMilli;
+  ProjectC.Boot -> MainC;
+  ProjectC.BlinkTimer -> BlinkTimerMilli;
   
   // rgb led driver
   components LedsC, new RgbLedC(6, 7);
-  BlinkTimeSyncC.Leds -> LedsC;
-  BlinkTimeSyncC.RgbLed -> RgbLedC;
+  ProjectC.Leds -> LedsC;
+  ProjectC.RgbLed -> RgbLedC;
   
   // radio ip stack
   components IPStackC;
-  BlinkTimeSyncC.RadioControl ->  IPStackC;
+  ProjectC.RadioControl ->  IPStackC;
 
 #ifdef RPL_ROUTING
   components RPLRoutingC;
@@ -33,10 +33,10 @@ implementation {
   components SerialPrintfC, SerialStartC;
 
   components LocalTimeMilliC;
-  BlinkTimeSyncC.LocalTime -> LocalTimeMilliC;
+  ProjectC.LocalTime -> LocalTimeMilliC;
   
   components TimeSyncC;
   MainC.SoftwareInit -> TimeSyncC;
-  BlinkTimeSyncC.TimeSyncControl -> TimeSyncC;
-  BlinkTimeSyncC.GlobalTime -> TimeSyncC;
+  ProjectC.TimeSyncControl -> TimeSyncC;
+  ProjectC.GlobalTime -> TimeSyncC;
 }
