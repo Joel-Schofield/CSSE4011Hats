@@ -38,6 +38,8 @@ PFLAGS += -DREPORT_DEST=\"fec0::100\" #-DBLIP_STATS -BLIP_STAPS_IP_MEM
 # EUI will be used in either case.
 PFLAGS += -DBLIP_DERIVE_SHORTADDRS
 
+CFLAGS += -I$(TOSDIR)/lib/ftsp
+
 # this disables dhcp and statically chooses a prefix.  the motes form
 # their ipv6 address by combining this with TOS_NODE_ID
 PFLAGS += -DIN6_PREFIX=\"fec0::\"
