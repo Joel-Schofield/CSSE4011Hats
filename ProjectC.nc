@@ -1,89 +1,83 @@
-// this is for csse4011 
-
-#include <IPDispatch.h>
-#include <lib6lowpan/lib6lowpan.h>
-#include <lib6lowpan/ip.h>
-#include <lib6lowpan/ip.h>
-
-#include "printf.h"
-#include "Custom_packet.h"
-
-module ProjectC
-{
+module ProjectC {
   uses {
-    // basic componends
     interface Boot;
-    interface Leds;
-    interface RgbLed;
-
-    // sensors
-
-    // udp controll
-    interface UDP as Receive;
-
-    // timers
-    interface Timer<TMilli> as BlinkTimer;
-
-    // radio control
     interface SplitControl as RadioControl;
 
-    // time sync controll
-    interface StdControl as TimeSyncControl;
-    interface LocalTime<TMilli>;
-    interface GlobalTime<TMilli>;
+    // udp interfaces, one to echo back, one to update to the base station and one for udpleds
+    interface UDP as Echo;
+
+    interface Leds;
+
+    // sensors
+    interface Read<uint16_t> as sensor1;
+
+    interface Timer<TMilli> as StatusTimer;
+
+    interface BlipStatistics<ip_statistics_t> as IPStats;
+    interface BlipStatistics<udp_statistics_t> as UDPStats;
   }
-}
 
-implementation
-{
+} 
 
-  //
-  // globals
-  //
+implementation {
 
-  // Time
-  uint32_t refLocalTime = 0;
-  uint32_t refGlobalTime = 0;
-
-  // varables
-  uint32_t out = 0;
-  uint32_t ledVal = 0;
-
-  // udp destination stuff
+  bool timerStarted;
+  nx_struct udp_report stats;
+  struct sockaddr_in6 route_dest;
   struct sockaddr_in6 report_dest;
+  uint16_t lightSensorData = 0;
 
-  // custom packets
-  struct udp_report reportstats;
-  struct udp_receive receive;
+  // custom radiopacket
+  radio_count_msg_t radio_payload;
+  uint8_t counter;
+  struct sockaddr_in6 dest;
 
   event void Boot.booted() {
-
-    printf("Booted\n");
-    printfflush();
-
-    // start radio
+    // start the radio
     call RadioControl.start();
+    call Button0.makeInput();
+    timerStarted = FALSE;
 
-    // switch off all Leds
-    call Leds.set(0);
-    call RgbLed.setColorRgb(0, 0, 0);
+    call IPStats.clear();
 
+    // if reporting to destination is enabled, periodicaly send to the station
     #ifdef REPORT_DEST
-    // set the port of the report location port 7000
     report_dest.sin6_port = htons(7000);
     inet_pton6(REPORT_DEST, &report_dest.sin6_addr);
+    call StatusTimer.startOneShot(5000);
     #endif
 
-    // start timer to toggle LEDs
-    call BlinkTimer.startPeriodic(100);
+    dbg("Boot", "booted: %i\n", TOS_NODE_ID);
 
-    // bind local udp to a port 7001
-    call Receive.bind(7001);
-
+    // bind to ports for each udp service
+    call Echo.bind(7);
   }
 
-  event void BlinkTimer.fired() {
+  event void RadioControl.startDone(error_t e) {
+    // no need to implement
+  }
 
+  event void RadioControl.stopDone(error_t e) {
+    // no need to implement
+  }
+
+  // when you receive something on port 7
+  event void Echo.recvfrom(struct sockaddr_in6 *from, void *data, 
+                 uint16_t len, struct ip6_metadata *meta) {
+    // for echoing the netcat data
+    #ifdef PRINTFUART_ENABLED
+    int i;
+    uint8_t *cur = data;
+    printf("Echo recv [%i]: ", len);
+    for (i = 0; i < len; i++) {
+      printf("%02x ", cur[i]);
+    }
+    printf("\n");
+    #endif
+  }
+
+  // status update timer fired for sending on port 7001
+  event void StatusTimer.fired() {   
     uint32_t localTime;
 
     // if Globaltime get is successfull then update the globaltime reference
@@ -114,25 +108,14 @@ implementation
     // 255 is max, so if outs bits match 4, then put maximum brightness onto 
     // red if match 2 max onto green 1, max onto blue
     call RgbLed.setColorRgb(((out & 4) * 255), ((out & 2) * 255), ((out & 1) * 255));
-  }
 
-  // when you receive on port 1234 do the following
-  event void Receive.recvfrom(struct sockaddr_in6 *src, void *payload, 
-                  uint16_t len, struct ip6_metadata *meta) {   
-    
-    // get the payload
-    // this contains the led value n stuff
-    // uint8_t *cur = data;
-    struct udp_receive *rec = payload;
-  }
+    stats.seqno++;
+    stats.sender = TOS_NODE_ID;
+    stats.interval = REPORT_PERIOD;
 
-  event void RadioControl.startDone(error_t error) {
-    // start timesync service
-    call TimeSyncControl.start();
+    call IPStats.get(&stats.ip);
+    call UDPStats.get(&stats.udp);
+    call Status.sendto(&report_dest, &stats, sizeof(stats));
   }
-  event void RadioControl.stopDone(error_t e) {
-    // no need to implement
-  }
- 
 }
 

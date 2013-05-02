@@ -6,46 +6,72 @@ configuration ProjectAppC
 { 
 } 
 implementation { 
-  
-  components ProjectC, MainC, new TimerMilliC() as BlinkTimerMilli;
 
-  // basic components
+// basic components
+  components MainC, LedsC;
+  components ProjectC;
+
   ProjectC.Boot -> MainC;
-  ProjectC.BlinkTimer -> BlinkTimerMilli;
-  
-  // rgb led driver
-  components LedsC, new RgbLedC(6, 7);
   ProjectC.Leds -> LedsC;
-  ProjectC.RgbLed -> RgbLedC;
-  
-  // radio ip stack
-  components IPStackC;
-  ProjectC.RadioControl ->  IPStackC;
 
-  // udp radio
-  components new UdpSocketC() as Receive;
+  // timers 
+  components new TimerMilliC() as t0;
+  // components new TimerMilliC() as t1;
+  components IPStackC;
+
+  components ZigduinoDigitalPortsC;
+  ProjectC.Button0 -> ZigduinoDigitalPortsC.Digital1;
+
+  // sensors
+  components new LightSensorC() as Sensor;
+  ProjectC.sensor1 -> Sensor;
+
+  // networking udpsockets for different functions in program
+  ProjectC.RadioControl ->  IPStackC;
+  components new UdpSocketC() as Echo,
+  new UdpSocketC() as Status,
+  new UdpSocketC() as ledserv;
+
+  // wire them up to the program
+  ProjectC.Echo -> Echo;
+
+  // wire up the timers
+  ProjectC.StatusTimer -> t0;
+  // ProjectC.Timer0 -> t1;
 
   // dont really know what this is, but its important
   components UdpC, IPDispatchC;
   ProjectC.IPStats -> IPDispatchC;
   ProjectC.UDPStats -> UdpC;
 
-#ifdef RPL_ROUTING
+  #ifdef RPL_ROUTING
   components RPLRoutingC;
-#endif
+  #endif
 
   // UDP shell on port 2000
   components UDPShellC;
-  components RouteCmdC;
 
-  // printf on serial port
-  components SerialPrintfC, SerialStartC;
+  #ifndef  IN6_PREFIX
+  components DhcpCmdC;
+  #endif
 
-  components LocalTimeMilliC;
-  ProjectC.LocalTime -> LocalTimeMilliC;
-  
-  components TimeSyncC;
-  MainC.SoftwareInit -> TimeSyncC;
-  ProjectC.TimeSyncControl -> TimeSyncC;
-  ProjectC.GlobalTime -> TimeSyncC;
+  #ifdef PRINTFUART_ENABLED
+  /* This component wires printf directly to the serial port, and does
+  * not use any framing.  You can view the output simply by tailing
+  * the serial device.  Unlike the old printfUART, this allows us to
+  * use PlatformSerialC to provide the serial driver.
+  * 
+  * For instance:
+  * $ stty -F /dev/ttyUSB0 115200
+  * $ tail -f /dev/ttyUSB0
+  */
+  components SerialPrintfC;
+
+  /* This is the alternative printf implementation which puts the
+  * output in framed tinyos serial messages.  This lets you operate
+  * alongside other users of the tinyos serial stack.
+  */
+  // components PrintfC;
+  // components SerialStartC;
+  #endif
 }
