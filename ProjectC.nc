@@ -20,10 +20,10 @@ module ProjectC {
 		interface UDP as LedServer;
 
 		interface Leds;
+		interface RgbLed;
 		interface GeneralIO as Button0;
 
 		// sensors
-		interface Read<uint16_t> as sensor1;
 
 		interface Timer<TMilli> as StatusTimer;
 		// interface Timer<TMilli> as Timer0;
@@ -113,33 +113,8 @@ module ProjectC {
 		#endif
 	}
 
-/*
-	// timer event fired for sending on port 1234
-	event void Timer0.fired() {
-		bool button = call Button0.get();
-		call sensor1.read();
-		counter++;
-		radio_payload.counter=counter;
-		if(button) {
-			// if button is pressed broadcast
-			inet_pton6("ff02::2", &dest.sin6_addr);
-		} else {
-			// else only to one mote
-			if(TOS_NODE_ID == 2) {
-				inet_pton6("fec0::4", &dest.sin6_addr);
-			} else if (TOS_NODE_ID == 4) {
-				inet_pton6("fec0::2", &dest.sin6_addr);
-			}
-			
-		}
-		dest.sin6_port = htons(1234);
-		call Status.sendto(&dest,&radio_payload,sizeof(radio_count_msg_t));
-	}
-
-*/
 	// status update timer fired for sending on port 7001
-	event void StatusTimer.fired() {
-		call sensor1.read();		
+	event void StatusTimer.fired() {	
 		call Leds.led0Toggle();
 		if (!timerStarted) {
 			call StatusTimer.startPeriodic(5000);
@@ -154,12 +129,5 @@ module ProjectC {
 		call IPStats.get(&stats.ip);
 		call UDPStats.get(&stats.udp);
 		call Status.sendto(&report_dest, &stats, sizeof(stats));
-	}
-
-	event void sensor1.readDone(error_t result, uint16_t data) {
-		if (result == SUCCESS) {
-			// update the data
-			lightSensorData = data;
-		}
 	}
 }

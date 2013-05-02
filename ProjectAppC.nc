@@ -19,9 +19,12 @@ implementation {
     components ZigduinoDigitalPortsC;
     ProjectC.Button0 -> ZigduinoDigitalPortsC.Digital1;
 
+    // rgb led driver
+    components LedsC, new RgbLedC(6, 7);
+    BlinkTimeSyncC.Leds -> LedsC;
+    BlinkTimeSyncC.RgbLed -> RgbLedC;
+
     // sensors
-    components new LightSensorC() as Sensor;
-    ProjectC.sensor1 -> Sensor;
 
     // networking udpsockets for different functions in program
     ProjectC.RadioControl ->  IPStackC;
