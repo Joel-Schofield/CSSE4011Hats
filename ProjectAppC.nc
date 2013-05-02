@@ -21,8 +21,8 @@ implementation {
 
     // rgb led driver
     components LedsC, new RgbLedC(6, 7);
-    BlinkTimeSyncC.Leds -> LedsC;
-    BlinkTimeSyncC.RgbLed -> RgbLedC;
+    ProjectC.Leds -> LedsC;
+    ProjectC.RgbLed -> RgbLedC;
 
     // sensors
 
