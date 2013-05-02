@@ -53,8 +53,8 @@ implementation
   struct sockaddr_in6 report_dest;
 
   // custom packets
-  nx_struct udp_report reportstats;
-  nx_struct udp_receive receive;
+  struct udp_report reportstats;
+  struct udp_receive receive;
 
   event void Boot.booted() {
 
@@ -122,7 +122,7 @@ implementation
     
     // get the payload
     // this contains the led value n stuff
-    receive = (nx_struct udp_receive)payload;
+    receive = (struct udp_receive)payload;
   }
 
   event void RadioControl.startDone(error_t error) {
