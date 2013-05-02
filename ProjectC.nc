@@ -123,11 +123,6 @@ implementation
     // get the payload
     // this contains the led value n stuff
     receive = (nx_struct receive)payload;
-    // check it is the correct length
-    if(len == sizeof(nx_struct receive))
-    {
-      // use that data
-    }
   }
 
   event void RadioControl.startDone(error_t error) {
