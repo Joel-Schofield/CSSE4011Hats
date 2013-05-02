@@ -5,11 +5,10 @@ configuration ProjectAppC
 } 
 implementation {
     // basic components
-    components MainC, LedsC;
+    components MainC;
     components ProjectC;
 
     ProjectC.Boot -> MainC;
-    ProjectC.Leds -> LedsC;
 
     // timers 
     components new TimerMilliC() as t0;
