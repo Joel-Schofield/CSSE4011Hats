@@ -6,7 +6,7 @@
 #include <lib6lowpan/ip.h>
 
 #include "printf.h"
-#include "Custom_packer.h"
+#include "Custom_packet.h"
 
 module ProjectC
 {
