@@ -41,6 +41,7 @@ module ProjectC {
 	struct sockaddr_in6 route_dest;
 	struct sockaddr_in6 report_dest;
 	uint16_t lightSensorData = 0;
+	uint8_t val = 0;
 
 	// custom radiopacket
 	radio_count_msg_t radio_payload;
@@ -119,7 +120,10 @@ module ProjectC {
 		if (!timerStarted) {
 			call StatusTimer.startPeriodic(5000);
 			timerStarted = TRUE;
+			call RgbLed.setColorRgb(0, 0, 0);
 		}
+
+		call RgbLed.setColorRgb(val++, val++, val++);
 
 		stats.seqno++;
 		stats.sender = TOS_NODE_ID;
