@@ -122,7 +122,8 @@ implementation
     
     // get the payload
     // this contains the led value n stuff
-    &receive = (struct udp_receive)payload;
+    // uint8_t *cur = data;
+    struct udp_receive *rec = payload;
   }
 
   event void RadioControl.startDone(error_t error) {
