@@ -122,9 +122,9 @@ implementation
     
     // get the payload
     // this contains the led value n stuff
-    receive = (receive)payload;
+    receive = (nx_struct receive)payload;
     // check it is the correct length
-    if(len == sizeof(receive))
+    if(len == sizeof(nx_struct receive))
     {
       // use that data
     }
