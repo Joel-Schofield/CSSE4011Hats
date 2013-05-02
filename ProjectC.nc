@@ -122,9 +122,9 @@ implementation
     
     // get the payload
     // this contains the led value n stuff
-    udp_receive * msg = payload;
+    receive = (receive)payload;
     // check it is the correct length
-    if(len == sizeof(udp_receive))
+    if(len == sizeof(receive))
     {
       // use that data
     }
