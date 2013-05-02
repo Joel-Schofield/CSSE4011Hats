@@ -27,8 +27,8 @@ implementation {
 
   // dont really know what this is, but its important
   components UdpC, IPDispatchC;
-  Prac3C.IPStats -> IPDispatchC;
-  Prac3C.UDPStats -> UdpC;
+  ProjectC.IPStats -> IPDispatchC;
+  ProjectC.UDPStats -> UdpC;
 
 #ifdef RPL_ROUTING
   components RPLRoutingC;
