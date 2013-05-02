@@ -1,4 +1,5 @@
 // this is csse4011 stuff
+#include <lib6lowpan/6lowpan.h>
 
 
 configuration ProjectAppC 
@@ -20,6 +21,9 @@ implementation {
   // radio ip stack
   components IPStackC;
   ProjectC.RadioControl ->  IPStackC;
+
+  // udp radio
+  components new UdpSocketC() as Receive;
 
 #ifdef RPL_ROUTING
   components RPLRoutingC;

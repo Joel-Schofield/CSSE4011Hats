@@ -1,18 +1,33 @@
 // this is for csse4011 
 
+#include <IPDispatch.h>
+#include <lib6lowpan/lib6lowpan.h>
+#include <lib6lowpan/ip.h>
+#include <lib6lowpan/ip.h>
 
 #include "printf.h"
+#include "Custom_packer.h"
 
 module ProjectC
 {
   uses {
+    // basic componends
     interface Boot;
     interface Leds;
     interface RgbLed;
-    
+
+    // sensors
+
+    // udp controll
+    interface UDP as Receive;
+
+    // timers
     interface Timer<TMilli> as BlinkTimer;
 
+    // radio control
     interface SplitControl as RadioControl;
+
+    // time sync controll
     interface StdControl as TimeSyncControl;
     interface LocalTime<TMilli>;
     interface GlobalTime<TMilli>;
@@ -22,11 +37,24 @@ module ProjectC
 implementation
 {
 
+  //
   // globals
-  uint32_t out = 0;
-  uint32_t ledVal = 0;
+  //
+
+  // Time
   uint32_t refLocalTime = 0;
   uint32_t refGlobalTime = 0;
+
+  // varables
+  uint32_t out = 0;
+  uint32_t ledVal = 0;
+
+  // udp destination stuff
+  struct sockaddr_in6 report_dest;
+
+  // custom packets
+  nx_struct udp_report reportstats;
+  nx_struct udp_receive receive;
 
   event void Boot.booted() {
 
@@ -40,16 +68,17 @@ implementation
     call Leds.set(0);
     call RgbLed.setColorRgb(0, 0, 0);
 
+    // set the port of the report location port 7000
+    report_dest.sin6_port = htons(7000);
+    inet_pton6(REPORT_DEST, &report_dest.sin6_addr);
+
     // start timer to toggle LEDs
     call BlinkTimer.startPeriodic(100);
-  }
-  
-  event void RadioControl.startDone(error_t error) {
-  
-    // start timesync service
-    call TimeSyncControl.start();
-  }
 
+    // bind local udp to a port 7001
+    call Receive.bind(7001);
+
+  }
 
   event void BlinkTimer.fired() {
 
@@ -85,8 +114,26 @@ implementation
     call RgbLed.setColorRgb(((out & 4) * 255), ((out & 2) * 255), ((out & 1) * 255));
   }
 
-  event void RadioControl.stopDone(error_t error) {
+  // when you receive on port 1234 do the following
+  event void Receive.recvfrom(struct sockaddr_in6 *src, void *payload, 
+                  uint16_t len, struct ip6_metadata *meta) {   
+    
+    // get the payload
+    // this contains the led value n stuff
+    udp_receive * msg = payload;
+    // check it is the correct length
+    if(len == sizeof(udp_receive))
+    {
+      // use that data
+    }
+  }
 
+  event void RadioControl.startDone(error_t error) {
+    // start timesync service
+    call TimeSyncControl.start();
+  }
+  event void RadioControl.stopDone(error_t e) {
+    // no need to implement
   }
  
 }
