@@ -1,5 +1,9 @@
 COMPONENT=ProjectAppC
 
+# enable dma on the radio
+# PFLAGS += -DENABLE_SPI0_DMA
+PFLAGS += -DREPORT_DEST='"fec0::100"'
+
 
 # you can compile with or without a routing protocol... of course,
 # without it, you will only be able to use link-local communication.

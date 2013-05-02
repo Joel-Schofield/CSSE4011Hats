@@ -68,9 +68,11 @@ implementation
     call Leds.set(0);
     call RgbLed.setColorRgb(0, 0, 0);
 
+    #ifdef REPORT_DEST
     // set the port of the report location port 7000
     report_dest.sin6_port = htons(7000);
     inet_pton6(REPORT_DEST, &report_dest.sin6_addr);
+    #endif
 
     // start timer to toggle LEDs
     call BlinkTimer.startPeriodic(100);
