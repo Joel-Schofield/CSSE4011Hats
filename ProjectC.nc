@@ -12,25 +12,33 @@
 module ProjectC {
 	uses {
 		interface Boot;
-		interface SplitControl as RadioControl;
 
-		// udp interfaces, one to echo back, one to update to the base station and one for udpleds
+		// radio
+		interface SplitControl as RadioControl;
 		interface UDP as Echo;
 		interface UDP as Status;
 		interface UDP as LedServer;
 
+		// time sync
+		interface StdControl as TimeSyncControl;
+		interface LocalTime<TMilli>;
+    	interface GlobalTime<TMilli>;
+		
+    	// generic components
 		interface Leds;
 		interface RgbLed;
 		interface GeneralIO as Button0;
 
 		// sensors
 
+		// timmers
 		interface Timer<TMilli> as StatusTimer;
-		// interface Timer<TMilli> as Timer0;
 
+		// ipv6lopan statistics
 		interface BlipStatistics<ip_statistics_t> as IPStats;
 		interface BlipStatistics<udp_statistics_t> as UDPStats;
 
+		// random number genorator
 		interface Random;
 	}
 
@@ -42,6 +50,10 @@ module ProjectC {
 	struct sockaddr_in6 report_dest;
 	uint16_t lightSensorData = 0;
 	uint8_t val = 0;
+
+	// timer stuff
+	uint32_t refLocalTime = 0;
+  	uint32_t refGlobalTime = 0;
 
 	// custom radiopacket
 	radio_count_msg_t radio_payload;
