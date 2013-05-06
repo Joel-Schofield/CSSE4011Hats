@@ -5,7 +5,7 @@
 
 #include "Custom_packets.h"
 #include "UdpCountToLeds.h"
-// #include "blip_printf.h"
+#include "blip_printf.h"
 #include "printf.h"
 
 #define REPORT_PERIOD 5L
@@ -59,7 +59,7 @@ module ProjectC {
 
 	// custom radiopacket
 	// may need to init this
-	//msg radio_payload;
+	radio_payload msg;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
