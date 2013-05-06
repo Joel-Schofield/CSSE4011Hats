@@ -3,7 +3,6 @@
 
 #include <BlipStatistics.h>
 
-
 typedef nx_struct udp_report {
 	nx_uint16_t seqno;
 	nx_uint16_t sender;
