@@ -64,6 +64,9 @@ implementation {
     ProjectC.TimeSyncControl -> TimeSyncC;
     ProjectC.GlobalTime -> TimeSyncC;
 
+    // serial printing
+    components SerialPrintfC, SerialStartC;
+
     // prints the routing table
     #if defined(PLATFORM_IRIS)
     #warning *** RouterCmd disabled for IRIS ***
