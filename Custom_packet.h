@@ -3,6 +3,7 @@
 
 #include <BlipStatistics.h>
 
+
 typedef nx_struct udp_report {
 	nx_uint16_t seqno;
 	nx_uint16_t sender;
@@ -17,17 +18,17 @@ struct udp_receive {
 	nx_uint16_t stat;
 } ;
 
-typedef nx_struct radio_msg {
+struct radio_msg {
 	// led colour
-	nx_uint8_t red;
-	nx_uint8_t green;
-	nx_uint8_t blue;
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
 
 	// game id
-	nx_uint8_t gameId;
+	uint8_t gameId;
 
 	// sound id
-	nx_uint8_t soundId;
-} radio_msg;
+	uint8_t soundId;
+} ;
 
 #endif

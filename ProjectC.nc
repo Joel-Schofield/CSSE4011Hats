@@ -2,6 +2,7 @@
 #include <lib6lowpan/lib6lowpan.h>
 #include <lib6lowpan/ip.h>
 #include <lib6lowpan/ip.h>
+#include <BlipStatistics.h>
 
 #include "Custom_packets.h"
 #include "UdpCountToLeds.h"
@@ -59,7 +60,6 @@ module ProjectC {
 
 	// custom radiopacket
 	// may need to init this
-	nx_struct radio_payload msg;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
@@ -100,9 +100,9 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		nx_struct radio_msg * msg = payload;
+		struct radio_msg * msg = payload;
 		// check it is the correct length
-		if(len == sizeof(nx_struct radio_msg))
+		if(len == sizeof(radio_msg))
 		{
 			// change the led colour
 			call RgbLed.setColorRgb(msg->red, msg->green, msg->blue);
