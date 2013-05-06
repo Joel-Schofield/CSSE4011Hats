@@ -60,7 +60,7 @@ module ProjectC {
 
 	// custom radiopacket
 	// may need to init this
-	radio_msg msg;
+	struct radio_msg msg;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
