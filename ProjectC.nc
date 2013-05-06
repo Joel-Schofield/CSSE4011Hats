@@ -4,12 +4,25 @@
 #include <lib6lowpan/ip.h>
 #include <BlipStatistics.h>
 
-#include "Custom_packets.h"
+// #include "Custom_packets.h"
 #include "UdpCountToLeds.h"
 #include "blip_printf.h"
 #include "printf.h"
 
 #define REPORT_PERIOD 5L
+
+struct radio_msg {
+	// led colour
+	uint8_t red;
+	uint8_t green;
+	uint8_t blue;
+
+	// game id
+	uint8_t gameId;
+
+	// sound id
+	uint8_t soundId;
+} ;
 
 module ProjectC {
 	uses {
