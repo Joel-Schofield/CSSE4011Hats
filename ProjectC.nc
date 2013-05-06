@@ -60,6 +60,7 @@ module ProjectC {
 
 	// custom radiopacket
 	// may need to init this
+	radio_msg msg;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
@@ -100,9 +101,9 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		struct radio_msg * msg = payload;
+		*msg = payload;
 		// check it is the correct length
-		if(len == sizeof(radio_msg))
+		if(len == sizeof(msg))
 		{
 			// change the led colour
 			call RgbLed.setColorRgb(msg->red, msg->green, msg->blue);
