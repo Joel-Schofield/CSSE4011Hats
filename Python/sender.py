@@ -35,7 +35,7 @@ def send():
 				   ,int(Entrygameid.get())
 				   ,int(Entrygameid.get()))
 	for currentid in IDS:
-		time.sleep(.1)
+		time.sleep(.05)
 		UDPSock = socket(AF_INET6,SOCK_DGRAM)
 		UDPSock.connect((currentid,1234))
 		UDPSock.send(led)
