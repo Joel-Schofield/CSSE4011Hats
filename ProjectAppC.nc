@@ -40,10 +40,12 @@ implementation {
     // wire up the timers
     ProjectC.StatusTimer -> t0;
 
+    /*
     // dont really know what this is, but its important
     components UdpC, IPDispatchC;
     ProjectC.IPStats -> IPDispatchC;
     ProjectC.UDPStats -> UdpC;
+    */
 
     #ifdef RPL_ROUTING
     components RPLRoutingC;

@@ -37,8 +37,8 @@ module ProjectC {
 		interface Timer<TMilli> as StatusTimer;
 
 		// ipv6lopan statistics
-		interface BlipStatistics<ip_statistics_t> as IPStats;
-		interface BlipStatistics<udp_statistics_t> as UDPStats;
+		// interface BlipStatistics<ip_statistics_t> as IPStats;
+		// interface BlipStatistics<udp_statistics_t> as UDPStats;
 
 		// random number genorator for transmission
 		interface Random;
@@ -100,9 +100,9 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		*msg = payload;
+		msg = *payload;
 		// check it is the correct length
-		if(len == sizeof(radio_msg))
+		if(len == sizeof(nx_struct radio_msg))
 		{
 			// change the led colour
 			call RgbLed.setColorRgb(msg->red, msg->green, msg->blue);
@@ -143,10 +143,12 @@ module ProjectC {
 
 		call RgbLed.setColorRgb(val++, val++, val++);
 
+		/*?
 		stats.seqno++;
 		stats.sender = TOS_NODE_ID;
 		stats.interval = REPORT_PERIOD;
 		stats.sensor = lightSensorData;
+		*/
 
 		call IPStats.get(&stats.ip);
 		call UDPStats.get(&stats.udp);
