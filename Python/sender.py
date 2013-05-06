@@ -6,6 +6,7 @@ from Tkinter import *
 redval = 0
 greenval = 0
 blueval = 0
+IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 
 # the tk root
 top = Tk()
@@ -26,14 +27,15 @@ Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
 #add callbacks here
 def send(): 
 	UDPSock = socket(AF_INET6,SOCK_DGRAM)
-	address = Entryid.get()
-	UDPSock.connect((address,1234))
+	#address = Entryid.get()
 	led = pack("BBBBB",int(Scalered.get())
 				   ,int(Scalegreen.get())
 				   ,int(Scaleblue.get())
 				   ,int(Entrygameid.get())
 				   ,int(Entrygameid.get()))
-	UDPSock.send(led)
+	for currentid in IDS:
+		UDPSock.connect((currentid,1234))
+		UDPSock.send(led)
 
 # add widget code here
 
