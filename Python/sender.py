@@ -31,8 +31,8 @@ def send():
 	led = pack("BBBBB",int(Scalered.get())
 				   ,int(Scalegreen.get())
 				   ,int(Scaleblue.get())
-				   ,int(Gameidl.get())
-				   ,int(Gameidl.get()))
+				   ,int(Entrygameid.get())
+				   ,int(Entrygameid.get()))
 	UDPSock.send(led)
 
 # add widget code here
