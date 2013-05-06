@@ -114,13 +114,15 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
+		printf("got data\r\n");
 		memcpy(&msg,payload,sizeof(msg));
 		// check it is the correct length
 		if(len == sizeof(msg))
 		{
 			// change the led colour
+			printf("game ID: %u sound ID: %u R: %u G: %u B: %u\n\r",
+				msg.gameId,msg.soundId,msg.red,msg.green,msg.blue);
 			call RgbLed.setColorRgb(msg.red, msg.green, msg.blue);
-			printf("game ID: %u sound ID: %u\n\r", msg.gameId,msg.soundId);
 			printfflush();
 		}
 	}
