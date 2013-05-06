@@ -158,8 +158,6 @@ module ProjectC {
 			call RgbLed.setColorRgb(0, 0, 0);
 		}
 
-		call RgbLed.setColorRgb(val++, val++, val++);
-
 		/*?
 		stats.seqno++;
 		stats.sender = TOS_NODE_ID;
