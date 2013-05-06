@@ -114,7 +114,8 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		printf("got data\r\n");
+		printf("got data len:%u\r\n",len);
+		printfflush();
 		memcpy(&msg,payload,sizeof(msg));
 		// check it is the correct length
 		if(len == sizeof(msg))
