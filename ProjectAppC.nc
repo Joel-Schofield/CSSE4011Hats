@@ -1,4 +1,5 @@
 #include <lib6lowpan/6lowpan.h>
+#include "printf.h"
 
 configuration ProjectAppC
 {

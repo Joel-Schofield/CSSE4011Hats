@@ -3,9 +3,10 @@
 #include <lib6lowpan/ip.h>
 #include <lib6lowpan/ip.h>
 
-#include "UDPReport.h"
+#include "Custom_packets.h"
 #include "UdpCountToLeds.h"
-#include "blip_printf.h"
+// #include "blip_printf.h"
+#include "printf.h"
 
 #define REPORT_PERIOD 5L
 
@@ -30,6 +31,7 @@ module ProjectC {
 		interface GeneralIO as Button0;
 
 		// sensors
+		// add the acel here
 
 		// timmers
 		interface Timer<TMilli> as StatusTimer;
@@ -38,7 +40,7 @@ module ProjectC {
 		interface BlipStatistics<ip_statistics_t> as IPStats;
 		interface BlipStatistics<udp_statistics_t> as UDPStats;
 
-		// random number genorator
+		// random number genorator for transmission
 		interface Random;
 	}
 
@@ -56,11 +58,13 @@ module ProjectC {
   	uint32_t refGlobalTime = 0;
 
 	// custom radiopacket
-	radio_count_msg_t radio_payload;
+	// may need to init this
+	//msg radio_payload;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
 	event void Boot.booted() {
+		
 		// start the radio
 		call RadioControl.start();
 		call Button0.makeInput();
@@ -96,12 +100,14 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		radio_count_msg_t * msg = payload;
+		radio_msg * msg = payload;
 		// check it is the correct length
-		if(len == sizeof(radio_count_msg_t))
+		if(len == sizeof(radio_msg))
 		{
-			// change leds accordingly
-			call Leds.set(msg->counter);
+			// change the led colour
+			call RgbLed.setColorRgb(msg->red, msg->green, msg->blue);
+			printf("game ID: %u sound ID: %d\n\r", msg->gameId,msg->soundId);
+			printfflush();
 		}
 	}
 
