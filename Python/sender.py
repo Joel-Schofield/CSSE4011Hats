@@ -1,6 +1,7 @@
 from socket import *
 from struct import pack
 from Tkinter import *
+import time
 
 # global varables
 redval = 0
@@ -26,7 +27,7 @@ Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
 
 #add callbacks here
 def send(): 
-	UDPSock = socket(AF_INET6,SOCK_DGRAM)
+	#UDPSock = socket(AF_INET6,SOCK_DGRAM)
 	#address = Entryid.get()
 	led = pack("BBBBB",int(Scalered.get())
 				   ,int(Scalegreen.get())
@@ -34,6 +35,8 @@ def send():
 				   ,int(Entrygameid.get())
 				   ,int(Entrygameid.get()))
 	for currentid in IDS:
+		time.sleep(.1)
+		UDPSock = socket(AF_INET6,SOCK_DGRAM)
 		UDPSock.connect((currentid,1234))
 		UDPSock.send(led)
 
