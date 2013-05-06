@@ -70,7 +70,7 @@ module ProjectC {
 		call Button0.makeInput();
 		timerStarted = FALSE;
 
-		call IPStats.clear();
+		// call IPStats.clear();
 		// call Timer0.startPeriodic(700);
 
 		// if reporting to destination is enabled, periodicaly send to the station
@@ -100,7 +100,7 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		// get the payload
-		msg = *payload;
+		radio_msg * msg = payload
 		// check it is the correct length
 		if(len == sizeof(nx_struct radio_msg))
 		{
@@ -150,8 +150,8 @@ module ProjectC {
 		stats.sensor = lightSensorData;
 		*/
 
-		call IPStats.get(&stats.ip);
-		call UDPStats.get(&stats.udp);
-		call Status.sendto(&report_dest, &stats, sizeof(stats));
+		//call IPStats.get(&stats.ip);
+		//call UDPStats.get(&stats.udp);
+		//call Status.sendto(&report_dest, &stats, sizeof(stats));
 	}
 }
