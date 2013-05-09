@@ -3,7 +3,7 @@ from struct import unpack
  
 UDPSock = socket(AF_INET6,SOCK_DGRAM)
 UDPSock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-UDPSock.bind(("",1234)) 
+UDPSock.bind(("",4321)) 
  
 while True:
     data,addr = UDPSock.recvfrom(1024)
@@ -11,7 +11,7 @@ while True:
         print "Client has exited!"
         break
     else:
-        print "\nReceived message from", addr[0],":", unpack("xB",data)[0]
+        print "\nReceived message from"
  
 # Close socket
 UDPSock.close()
