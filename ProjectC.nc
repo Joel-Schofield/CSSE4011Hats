@@ -242,6 +242,10 @@ module ProjectC {
 					datay[temp] = call Random.rand16();
 					dataz[temp] = call Random.rand16();
 				}
+				msg_send.id = 50;
+				msg_send.datax = datax;
+				msg_send.datay = datay;
+				msg_send.dataz = dataz;
 				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
 			}
 		}
