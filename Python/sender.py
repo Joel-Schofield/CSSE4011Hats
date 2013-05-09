@@ -20,6 +20,9 @@ redval = 0
 greenval = 0
 blueval = 0
 IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
+datax = []
+datay = []
+dataz = []
 
 #add callbacks here
 def send(): 
@@ -52,6 +55,12 @@ def receive():
 	        break
 	    else:
 	        print "\nReceived message"
+	        datax = unpack("h",data[:300])
+	        print datax
+	        datay = unpack("h",data[300:600])
+	        print datay
+	        dataz = unpack("h",data[600:900])
+	        print dataz
 
 
 # the tk root
