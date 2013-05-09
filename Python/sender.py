@@ -8,7 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 from matplotlib.figure import Figure
 
-from struct import pack
+from struct import pack, unpack
 from Tkinter import *
 from threading import Thread
 import time
@@ -55,12 +55,15 @@ def receive():
 	        break
 	    else:
 	        print "\nReceived message"
+	        print data
+	        """
 	        datax = unpack("h",data[:300])
 	        print datax
 	        datay = unpack("h",data[300:600])
 	        print datay
 	        dataz = unpack("h",data[600:900])
 	        print dataz
+	        """
 
 
 # the tk root
