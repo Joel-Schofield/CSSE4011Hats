@@ -129,7 +129,7 @@ module ProjectC {
 
 		//start reading from the ADC.
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
-		printf("Boot", "booted: %i\n", TOS_NODE_ID);
+		printf("Booted: %i\n", TOS_NODE_ID);
 		printfflush();
 	}
 
@@ -182,6 +182,9 @@ module ProjectC {
 
 	event void AdcTimer.fired() 
 	  {
+
+	  	printf("adc start\n");
+	  	printfflush();
 
 	    call AccelX.read();
 	    call AccelY.read();
