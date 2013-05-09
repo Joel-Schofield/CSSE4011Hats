@@ -237,7 +237,7 @@ module ProjectC {
 				// reset the data
 				datazplace = 0;
 				// send the data
-				call Status.sendto(&report_dest, &msg_send, sizeof(msg_send));
+				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
 			}
 		}
 	}
