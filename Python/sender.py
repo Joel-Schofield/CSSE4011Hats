@@ -28,18 +28,16 @@ def send():
 				   ,int(Scaleblue.get())
 				   ,int(Entrygameid.get())
 				   ,int(Entrygameid.get()))
-	if(address == "ffff") {
+	if(address == "ffff"):
 		for currentid in IDS:
 			time.sleep(.05)
 			UDPSock = socket(AF_INET6,SOCK_DGRAM)
 			UDPSock.connect((currentid,1234))
 			UDPSock.send(led)
-	} 
-	else {
+	else:
 		UDPSock = socket(AF_INET6,SOCK_DGRAM)
 		UDPSock.connect((address,1234))
 		UDPSock.send(led)
-	}
 
 def receive():
 	UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
