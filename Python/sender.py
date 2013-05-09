@@ -25,8 +25,21 @@ IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 top = Tk()
 top.wm_title("CSSE4011 Super Awsome iGame iHats")
 
-Scaleframe = Frame(top)
-Scaleframe.pack(side = TOP, fill = X)
+f = Figure(figsize=(8,3), dpi=100)
+a = f.add_subplot(111)
+t = arange(0.0,3.0,0.01)
+s = sin(2*pi*t)
+
+a.plot(t,s)
+
+Scaleframered = Frame(top)
+Scaleframered.pack(side = TOP, fill = X)
+
+Scaleframegreen = Frame(top)
+Scaleframegreen.pack(side = TOP, fill = X)
+
+Scaleframeblue = Frame(top)
+Scaleframeblue.pack(side = TOP, fill = X)
 
 Moteselectframe = Frame(top)
 Moteselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
@@ -40,6 +53,10 @@ Graphframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 Buttonframe = Frame(top)
 Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
 
+# a tk.DrawingArea
+canvas = FigureCanvasTkAgg(f, master = Graphframe)
+
+toolbar = NavigationToolbar2TkAgg( canvas, Graphframe)
 
 #add callbacks here
 def send(): 
@@ -59,20 +76,20 @@ def send():
 # add widget code here
 
 # Slider Frame
-Scalered = Scale(Scaleframe, from_= 0, to = 255, orient = HORIZONTAL)
-redlable = Label(Scaleframe, text = "Red")
-Scalegreen = Scale(Scaleframe, from_ = 0, to = 255, orient = HORIZONTAL)
-greenlable = Label(Scaleframe, text = "Green")
-Scaleblue = Scale(Scaleframe, from_ = 0, to = 255, orient = HORIZONTAL)
-bluelable = Label(Scaleframe, text = "Blue")
+Scalered = Scale(Scaleframered, from_= 0, to = 255, orient = HORIZONTAL, )
+redlable = Label(Scaleframered, text = "Red")
+Scalegreen = Scale(Scaleframegreen, from_ = 0, to = 255, orient = HORIZONTAL)
+greenlable = Label(Scaleframegreen, text = "Green")
+Scaleblue = Scale(Scaleframeblue, from_ = 0, to = 255, orient = HORIZONTAL)
+bluelable = Label(Scaleframeblue, text = "Blue")
 
 # pack them
 redlable.pack(side = LEFT, anchor = W, padx = 10)
-Scalered.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
-greenlable.pack(side = LEFT, anchor = W, padx = 10)
-Scalegreen.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
-bluelable.pack(side = LEFT, anchor = W, padx = 10)
-Scaleblue.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
+Scalered.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
+greenlable.pack(side = LEFT, anchor = W, padx = 5)
+Scalegreen.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
+bluelable.pack(side = LEFT, anchor = W, padx = 9)
+Scaleblue.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
 
 
 # Mote ID frame
@@ -91,6 +108,13 @@ Entrygameid = Entry(Gameidselectframe, bd = 5)
 #pack them
 Gameidl.pack(side = LEFT)
 Entrygameid.pack(side = RIGHT)
+
+canvas.show()
+canvas.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
+
+toolbar.update()
+canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand = True)
+
 
 # Button
 B = Button(Buttonframe, text ="send", command = send, width = 20)
