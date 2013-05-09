@@ -11,6 +11,18 @@ implementation {
 
     ProjectC.Boot -> MainC;
 
+
+    //ADC components.
+    components new TimerMilliC() as AdcTimer;
+    components new LightC(0) as AccelXSensor;
+    components new LightC(1) as AccelYSensor;
+    components new LightC(2) as AccelZSensor;
+
+    ProjectC.AdcTimer -> AdcTimer;
+    ProjectC.AccelX -> AccelXSensor;
+    ProjectC.AccelY -> AccelYSensor;
+    ProjectC.AccelZ -> AccelZSensor;
+
     // timers 
     components new TimerMilliC() as t0;
     // components new TimerMilliC() as t1;

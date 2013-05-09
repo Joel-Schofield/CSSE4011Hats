@@ -45,9 +45,13 @@ module ProjectC {
 		interface GeneralIO as Button0;
 
 		// sensors
-		// add the acel here
+		//ADC
+		interface Timer<TMilli> as AdcTimer;
+	    interface Read<uint16_t> as AccelX;
+	    interface Read<uint16_t> as AccelY;
+	    interface Read<uint16_t> as AccelZ;
 
-		// timmers
+		// timers
 		interface Timer<TMilli> as StatusTimer;
 
 		// ipv6lopan statistics
@@ -64,12 +68,16 @@ module ProjectC {
 	nx_struct udp_report stats;
 	struct sockaddr_in6 route_dest;
 	struct sockaddr_in6 report_dest;
-	uint16_t lightSensorData = 0;
-	uint8_t val = 0;
 
-	// timer stuff
+	// timer variables
 	uint32_t refLocalTime = 0;
   	uint32_t refGlobalTime = 0;
+
+  	// ADC variables
+  	uint16_t lastX = 0;
+	uint16_t lastY = 0;
+	uint16_t lastZ = 0;
+	uint16_t SAMPLING_PERIOD = 100; //adc sample period in millisecs
 
 	// custom radiopacket
 	// may need to init this
@@ -94,12 +102,15 @@ module ProjectC {
 		call StatusTimer.startOneShot(5000);
 		#endif
 
-		dbg("Boot", "booted: %i\n", TOS_NODE_ID);
-
 		// bind to ports for each udp service
 		call Echo.bind(7);
 		call LedServer.bind(1234);
 		call Status.bind(7001);
+
+		//start reading from the ADC.
+		call AdcTimer.startOneShot(SAMPLING_PERIOD);
+
+		dbg("Boot", "booted: %i\n", TOS_NODE_ID);
 	}
 
 	event void RadioControl.startDone(error_t e) {
@@ -169,4 +180,36 @@ module ProjectC {
 		//call UDPStats.get(&stats.udp);
 		//call Status.sendto(&report_dest, &stats, sizeof(stats));
 	}
+
+
+	//ADC EVENTS ---------------------------------------------
+	event void AdcTimer.fired() 
+	  {
+
+	    call AccelX.read();
+	    call AccelY.read();
+	    call AccelZ.read();
+
+	    printf("readVal: xyz: %u, %u, %u\n\r", lastX-450, lastY-450, lastZ-450);
+			printfflush();
+
+		call AdcTimer.startOneShot(SAMPLING_PERIOD);
+	  }
+
+	event void AccelX.readDone(error_t result, uint16_t val) {
+		if (result == SUCCESS) {
+			lastX = val;
+		}
+	}
+	event void AccelY.readDone(error_t result, uint16_t val) {
+		if (result == SUCCESS) {
+			lastY = val;
+		}
+	}
+	event void AccelZ.readDone(error_t result, uint16_t val) {
+		if (result == SUCCESS) {
+			lastZ = val;
+		}
+	}
+	// ------------------------------------------------------
 }
