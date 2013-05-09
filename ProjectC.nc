@@ -243,9 +243,9 @@ module ProjectC {
 					dataz[temp] = call Random.rand16();
 				}
 				msg_send.id = 50;
-				msg_send.datax = datax;
-				msg_send.datay = datay;
-				msg_send.dataz = dataz;
+				memcpy(&msg_send.dataxvar,datax,sizeof(datax));
+				memcpy(&msg_send.datayvar,datay,sizeof(datay));
+				memcpy(&msg_send.datazvar,dataz,sizeof(dataz));
 				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
 			}
 		}
