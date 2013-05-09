@@ -176,16 +176,10 @@ module ProjectC {
 			timerStarted = TRUE;
 			call RgbLed.setColorRgb(0, 0, 0);
 		}
-		printf("boop!\n");
-		printfflush();
 	}
 
 	event void AdcTimer.fired() 
 	  {
-
-	  	printf("adc start\n");
-	  	printfflush();
-
 	    call AccelX.read();
 	    call AccelY.read();
 	    call AccelZ.read();
@@ -237,6 +231,8 @@ module ProjectC {
 				// reset the data
 				datazplace = 0;
 				// send the data
+				printf("sending accelerometer\n");
+				printfflush();
 				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
 			}
 		}
