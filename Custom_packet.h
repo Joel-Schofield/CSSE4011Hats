@@ -17,6 +17,15 @@ struct udp_receive {
 	nx_uint16_t stat;
 } ;
 
+struct radio_msg_send {
+
+	// TOS_ID
+	uint8_t id;
+
+	// acceldata
+	uint8_t data[100];
+} ;
+
 struct radio_msg {
 	// led colour
 	uint8_t red;

@@ -24,6 +24,17 @@ struct radio_msg {
 	uint8_t soundId;
 } ;
 
+struct radio_msg_send {
+
+	// TOS_ID
+	uint8_t id;
+
+	// acceldata
+	uint16_t dataxvar[100];
+	uint16_t datayvar[100];
+	uint16_t datazvar[100];
+} ;
+
 module ProjectC {
 	uses {
 		interface Boot;
@@ -67,7 +78,7 @@ module ProjectC {
 	bool timerStarted;
 	nx_struct udp_report stats;
 	struct sockaddr_in6 route_dest;
-	struct sockaddr_in6 report_dest;
+	struct sockaddr_in6 send_dest;
 
 	// timer variables
 	uint32_t refLocalTime = 0;
@@ -79,9 +90,20 @@ module ProjectC {
 	uint16_t lastZ = 0;
 	uint16_t SAMPLING_PERIOD = 100; //adc sample period in millisecs
 
+	// data from the accelerometer
+	uint16_t datax[100];
+	uint16_t datay[100];
+	uint16_t dataz[100];
+
+	uint8_t dataxplace = 0;
+	uint8_t datayplace = 0;
+	uint8_t datazplace = 0;
+
 	// custom radiopacket
-	// may need to init this
+	// the receive radio packet
 	struct radio_msg msg;
+	// the send radio packet
+	struct radio_msg_send msg_send;
 	uint8_t counter;
 	struct sockaddr_in6 dest;
 
@@ -96,11 +118,9 @@ module ProjectC {
 		// call Timer0.startPeriodic(700);
 
 		// if reporting to destination is enabled, periodicaly send to the station
-		#ifdef REPORT_DEST
-		report_dest.sin6_port = htons(7000);
-		inet_pton6(REPORT_DEST, &report_dest.sin6_addr);
+		send_dest.sin6_port = htons(4321);
+		inet_pton6("fec0::100", &send_dest.sin6_addr);
 		call StatusTimer.startOneShot(5000);
-		#endif
 
 		// bind to ports for each udp service
 		call Echo.bind(7);
@@ -109,7 +129,6 @@ module ProjectC {
 
 		//start reading from the ADC.
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
-
 		dbg("Boot", "booted: %i\n", TOS_NODE_ID);
 	}
 
@@ -124,9 +143,6 @@ module ProjectC {
 	// when you receive on port 1234 do the following
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
-		// get the payload
-		printf("got data len:%u\r\n",len);
-		printfflush();
 		memcpy(&msg,payload,sizeof(msg));
 		// check it is the correct length
 		if(len == sizeof(msg))
@@ -148,16 +164,7 @@ module ProjectC {
 	// when you receive something on port 7
 	event void Echo.recvfrom(struct sockaddr_in6 *from, void *data, 
 							   uint16_t len, struct ip6_metadata *meta) {
-		// for echoing the netcat data
-		#ifdef PRINTFUART_ENABLED
-		int i;
-		uint8_t *cur = data;
-		printf("Echo recv [%i]: ", len);
-		for (i = 0; i < len; i++) {
-			printf("%02x ", cur[i]);
-		}
-		printf("\n");
-		#endif
+		// remove when theres time
 	}
 
 	// status update timer fired for sending on port 7001
@@ -168,21 +175,8 @@ module ProjectC {
 			timerStarted = TRUE;
 			call RgbLed.setColorRgb(0, 0, 0);
 		}
-
-		/*?
-		stats.seqno++;
-		stats.sender = TOS_NODE_ID;
-		stats.interval = REPORT_PERIOD;
-		stats.sensor = lightSensorData;
-		*/
-
-		//call IPStats.get(&stats.ip);
-		//call UDPStats.get(&stats.udp);
-		//call Status.sendto(&report_dest, &stats, sizeof(stats));
 	}
 
-
-	//ADC EVENTS ---------------------------------------------
 	event void AdcTimer.fired() 
 	  {
 
@@ -199,17 +193,46 @@ module ProjectC {
 	event void AccelX.readDone(error_t result, uint16_t val) {
 		if (result == SUCCESS) {
 			lastX = val;
+			
+			// store the data
+			datax[dataxplace] = val;
+			dataxplace++;
+
+			// check for overflow
+			if(dataxplace == 100) {
+				dataxplace = 0;
+			}
 		}
 	}
 	event void AccelY.readDone(error_t result, uint16_t val) {
 		if (result == SUCCESS) {
 			lastY = val;
+
+			// store the data
+			datay[datayplace] = val;
+			datayplace++;
+
+			// check for overflow
+			if(datayplace == 100) {
+				datayplace = 0;
+			}
 		}
 	}
 	event void AccelZ.readDone(error_t result, uint16_t val) {
 		if (result == SUCCESS) {
 			lastZ = val;
+
+			// store the data
+			dataz[datazplace] = val;
+			datazplace++;
+
+			// check for overflow
+			if(datazplace == 100) {
+				// reset the data
+				datazplace = 0;
+				// send the data
+				call Status.sendto(&report_dest, &msg_send, sizeof(msg_send));
+			}
 		}
 	}
-	// ------------------------------------------------------
 }
