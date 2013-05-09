@@ -21,16 +21,45 @@ greenval = 0
 blueval = 0
 IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 
+#add callbacks here
+def send(): 
+	#UDPSock = socket(AF_INET6,SOCK_DGRAM)
+	#address = Entryid.get()
+	led = pack("BBBBB",int(Scalered.get())
+				   ,int(Scalegreen.get())
+				   ,int(Scaleblue.get())
+				   ,int(Entrygameid.get())
+				   ,int(Entrygameid.get()))
+	for currentid in IDS:
+		time.sleep(.05)
+		UDPSock = socket(AF_INET6,SOCK_DGRAM)
+		UDPSock.connect((currentid,1234))
+		UDPSock.send(led)
+
+def receive():
+	UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
+	UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+	UDPSockReceive.bind(("",4321))
+
+	while True:
+	    data,addr = UDPSock.recvfrom(1024)
+	    if not data:
+	        print "Client has exited!"
+	        break
+	    else:
+	        print "\nReceived message"
+
+
 # the tk root
 top = Tk()
 top.wm_title("CSSE4011 Super Awsome iGame iHats")
 
-f = Figure(figsize=(8,3), dpi=100)
+f = Figure(figsize=(6,3), dpi=100)
 a = f.add_subplot(111)
 t = arange(0.0,3.0,0.01)
 s = sin(2*pi*t)
 
-a.plot(t,s)
+a.plot([1,2,3,4,5,6,7,8,9,10,0,4,2,8,20])
 
 Scaleframered = Frame(top)
 Scaleframered.pack(side = TOP, fill = X)
@@ -58,23 +87,6 @@ canvas = FigureCanvasTkAgg(f, master = Graphframe)
 
 toolbar = NavigationToolbar2TkAgg( canvas, Graphframe)
 
-#add callbacks here
-def send(): 
-	#UDPSock = socket(AF_INET6,SOCK_DGRAM)
-	#address = Entryid.get()
-	led = pack("BBBBB",int(Scalered.get())
-				   ,int(Scalegreen.get())
-				   ,int(Scaleblue.get())
-				   ,int(Entrygameid.get())
-				   ,int(Entrygameid.get()))
-	for currentid in IDS:
-		time.sleep(.05)
-		UDPSock = socket(AF_INET6,SOCK_DGRAM)
-		UDPSock.connect((currentid,1234))
-		UDPSock.send(led)
-
-# add widget code here
-
 # Slider Frame
 Scalered = Scale(Scaleframered, from_= 0, to = 255, orient = HORIZONTAL, )
 redlable = Label(Scaleframered, text = "Red")
@@ -98,8 +110,8 @@ Entryid = Entry(Moteselectframe, bd = 5)
 Entryid.insert(0,"fec0::")
 
 # pack them
-Sendl.pack(side = LEFT)
-Entryid.pack(side = RIGHT)
+Sendl.pack(side = LEFT, anchor = CENTER)
+Entryid.pack(side = RIGHT, anchor = CENTER)
 
 # Game ID frame
 Gameidl = Label(Gameidselectframe, text = "Game ID: ")
