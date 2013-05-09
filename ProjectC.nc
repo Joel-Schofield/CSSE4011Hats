@@ -128,7 +128,7 @@ module ProjectC {
 		call Status.bind(7001);
 
 		//start reading from the ADC.
-		call AdcTimer.startOneShot(SAMPLING_PERIOD);
+		// call AdcTimer.startOneShot(SAMPLING_PERIOD);
 		printf("Booted: %i\n", TOS_NODE_ID);
 		printfflush();
 	}
