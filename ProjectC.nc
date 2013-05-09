@@ -80,6 +80,8 @@ module ProjectC {
 	struct sockaddr_in6 route_dest;
 	struct sockaddr_in6 send_dest;
 
+	uint16_t temp = 0;
+
 	// timer variables
 	uint32_t refLocalTime = 0;
   	uint32_t refGlobalTime = 0;
@@ -128,7 +130,7 @@ module ProjectC {
 		call Status.bind(7001);
 
 		//start reading from the ADC.
-		// call AdcTimer.startOneShot(SAMPLING_PERIOD);
+		call AdcTimer.startOneShot(SAMPLING_PERIOD);
 		printf("Booted: %i\n", TOS_NODE_ID);
 		printfflush();
 	}
@@ -233,6 +235,13 @@ module ProjectC {
 				// send the data
 				printf("sending accelerometer\n");
 				printfflush();
+
+				// make up some data
+				for(temp = 0; tmep < 100; temp++) {
+					datax[temp] = call Random.rand8();
+					datay[temp] = call Random.rand8();
+					dataz[temp] = call Random.rand8();
+				}
 				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
 			}
 		}
