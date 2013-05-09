@@ -1,7 +1,19 @@
 from socket import *
+
+# matplotlib includes
+import matplotlib
+matplotlib.use("TkAgg")
+from numpy import arange, sin, pi
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backend_bases import key_press_handler
+
+from matplotlib.figure import Figure
+
 from struct import pack
 from Tkinter import *
 import time
+
+
 
 # global varables
 redval = 0
@@ -11,6 +23,7 @@ IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 
 # the tk root
 top = Tk()
+top.wm_title("CSSE4011 Super Awsome iGame iHats")
 
 Scaleframe = Frame(top)
 Scaleframe.pack(side = TOP, fill = X)
@@ -20,6 +33,9 @@ Moteselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 
 Gameidselectframe = Frame(top)
 Gameidselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
+
+Graphframe = Frame(top)
+Graphframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 
 Buttonframe = Frame(top)
 Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
@@ -44,13 +60,20 @@ def send():
 
 # Slider Frame
 Scalered = Scale(Scaleframe, from_= 0, to = 255, orient = HORIZONTAL)
+redlable = Label(Scaleframe, text = "Red")
 Scalegreen = Scale(Scaleframe, from_ = 0, to = 255, orient = HORIZONTAL)
+greenlable = Label(Scaleframe, text = "Green")
 Scaleblue = Scale(Scaleframe, from_ = 0, to = 255, orient = HORIZONTAL)
+bluelable = Label(Scaleframe, text = "Blue")
 
 # pack them
-Scalered.pack(side = TOP, fill = X, padx = 10)
-Scalegreen.pack(side = TOP, fill = X, padx = 10)
-Scaleblue.pack(side = TOP, fill = X, padx = 10)
+redlable.pack(side = LEFT, anchor = W, padx = 10)
+Scalered.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
+greenlable.pack(side = LEFT, anchor = W, padx = 10)
+Scalegreen.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
+bluelable.pack(side = LEFT, anchor = W, padx = 10)
+Scaleblue.pack(side = RIGHT, anchor = E, fill = X, padx = 10)
+
 
 # Mote ID frame
 Sendl = Label(Moteselectframe, text = "TOS__ID: ")
