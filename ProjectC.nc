@@ -129,7 +129,8 @@ module ProjectC {
 
 		//start reading from the ADC.
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
-		dbg("Boot", "booted: %i\n", TOS_NODE_ID);
+		printf("Boot", "booted: %i\n", TOS_NODE_ID);
+		printfflush();
 	}
 
 	event void RadioControl.startDone(error_t e) {
@@ -175,6 +176,8 @@ module ProjectC {
 			timerStarted = TRUE;
 			call RgbLed.setColorRgb(0, 0, 0);
 		}
+		printf("boop!\n");
+		printfflush();
 	}
 
 	event void AdcTimer.fired() 
@@ -185,7 +188,7 @@ module ProjectC {
 	    call AccelZ.read();
 
 	    printf("readVal: xyz: %u, %u, %u\n\r", lastX-450, lastY-450, lastZ-450);
-			printfflush();
+		printfflush();
 
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
 	  }
