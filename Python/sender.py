@@ -5,7 +5,6 @@ import matplotlib
 matplotlib.use("TkAgg")
 from numpy import arange, sin, pi
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.backend_bases import key_press_handler
 
 from matplotlib.figure import Figure
 
@@ -23,18 +22,24 @@ IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 
 #add callbacks here
 def send(): 
-	#UDPSock = socket(AF_INET6,SOCK_DGRAM)
-	#address = Entryid.get()
+	address = Entryid.get()
 	led = pack("BBBBB",int(Scalered.get())
 				   ,int(Scalegreen.get())
 				   ,int(Scaleblue.get())
 				   ,int(Entrygameid.get())
 				   ,int(Entrygameid.get()))
-	for currentid in IDS:
-		time.sleep(.05)
+	if(address == "ffff") {
+		for currentid in IDS:
+			time.sleep(.05)
+			UDPSock = socket(AF_INET6,SOCK_DGRAM)
+			UDPSock.connect((currentid,1234))
+			UDPSock.send(led)
+	} 
+	else {
 		UDPSock = socket(AF_INET6,SOCK_DGRAM)
-		UDPSock.connect((currentid,1234))
+		UDPSock.connect((address,1234))
 		UDPSock.send(led)
+	}
 
 def receive():
 	UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
