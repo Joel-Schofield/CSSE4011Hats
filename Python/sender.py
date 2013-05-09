@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 
 from struct import pack
 from Tkinter import *
+from threading import Thread
 import time
 
 
@@ -45,7 +46,7 @@ def receive():
 	UDPSockReceive.bind(("",4321))
 
 	while True:
-	    data,addr = UDPSock.recvfrom(1024)
+	    data,addr = UDPSockReceive.recvfrom(1024)
 	    if not data:
 	        print "Client has exited!"
 	        break
@@ -130,10 +131,13 @@ canvas.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 toolbar.update()
 canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand = True)
 
-
 # Button
 B = Button(Buttonframe, text ="send", command = send, width = 20)
 B.pack(side = TOP, pady = 10)
+
+# start thread
+t = Thread(target=receive)
+t.start()
 
 # do the main loop now
 top.mainloop()

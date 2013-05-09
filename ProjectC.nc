@@ -237,7 +237,7 @@ module ProjectC {
 				printfflush();
 
 				// make up some data
-				for(temp = 0; tmep < 100; temp++) {
+				for(temp = 0; temp < 100; temp++) {
 					datax[temp] = call Random.rand16();
 					datay[temp] = call Random.rand16();
 					dataz[temp] = call Random.rand16();
