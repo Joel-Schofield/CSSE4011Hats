@@ -119,7 +119,7 @@ module ProjectC {
 
 		// if reporting to destination is enabled, periodicaly send to the station
 		send_dest.sin6_port = htons(4321);
-		inet_pton6("fec0::1", &send_dest.sin6_addr);
+		inet_pton6(REPORT_DEST, &send_dest.sin6_addr);
 		call StatusTimer.startOneShot(5000);
 
 		// bind to ports for each udp service
