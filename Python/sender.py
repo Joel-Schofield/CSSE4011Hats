@@ -65,16 +65,18 @@ def receive():
                 datax.append(unpack("h",data[temp:(temp + 2)]))
             
             print datax
-            datapos = 0
+            a.plot(datax)
+            time.sleep(2)
 
             for temp in range(202,402,2):
-                datay.append(unpack("h",data[temp:(temp + 1)]))
+                datay.append(unpack("h",data[temp:(temp + 2)]))
 
             print datay
-            datapos = 0
+            a.plot(datax)
+            time.sleep(2)
 
             for temp in range(403,603,2):
-                dataz.append(unpack("h",data[temp:(temp + 1)]))
+                dataz.append(unpack("h",data[temp:(temp + 2)]))
                 datapos += 1
 
             print dataz
