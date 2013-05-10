@@ -70,32 +70,33 @@ def receive():
             mote_id = unpack("B",data[0])
             print mote_id
             print "\nchecking for: " + Entryid.get()[6:]
-            if(mote_id[0] == (Entryid.get()[6:])):
-            
-                for temp in range(1,201,2):
-                    datax.append(unpack("h",data[temp:(temp + 2)]))
+            if(len(Entryid.get()) > 7):
+                if(mote_id[0] == int((Entryid.get()[6:]))):
                 
-                print datax
-                a.clear()
-                a.plot(datax)
-                canvas.draw()
+                    for temp in range(1,201,2):
+                        datax.append(unpack("h",data[temp:(temp + 2)]))
+                    
+                    print datax
+                    a.clear()
+                    a.plot(datax)
+                    canvas.draw()
 
-                for temp in range(202,402,2):
-                    datay.append(unpack("h",data[temp:(temp + 2)]))
+                    for temp in range(202,402,2):
+                        datay.append(unpack("h",data[temp:(temp + 2)]))
 
-                print datay
-                a.plot(datay)
-                canvas.draw()
+                    print datay
+                    a.plot(datay)
+                    canvas.draw()
 
-                for temp in range(403,601,2):
-                    dataz.append(unpack("h",data[temp:(temp + 2)]))
+                    for temp in range(403,601,2):
+                        dataz.append(unpack("h",data[temp:(temp + 2)]))
 
-                print dataz
-                a.plot(dataz)
-                canvas.draw()
-                del datax[:]
-                del datay[:]
-                del dataz[:]
+                    print dataz
+                    a.plot(dataz)
+                    canvas.draw()
+                    del datax[:]
+                    del datay[:]
+                    del dataz[:]
 
 # the tk root
 top = Tk()
