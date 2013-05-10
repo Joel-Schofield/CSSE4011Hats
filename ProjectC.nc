@@ -242,7 +242,7 @@ module ProjectC {
 					datay[temp] = call Random.rand16();
 					dataz[temp] = call Random.rand16();
 				}
-				msg_send.id = 50;
+				msg_send.id = TOS_NODE_ID;
 				memcpy(&msg_send.dataxvar,datax,sizeof(datax));
 				memcpy(&msg_send.datayvar,datay,sizeof(datay));
 				memcpy(&msg_send.datazvar,dataz,sizeof(dataz));
