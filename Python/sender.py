@@ -88,7 +88,7 @@ def receive():
             canvas.draw()
             time.sleep(2)
 
-            for temp in range(403,603,2):
+            for temp in range(403,503,2):
                 dataz.append(unpack("h",data[temp:(temp + 2)]))
 
             print dataz
