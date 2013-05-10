@@ -20,8 +20,7 @@ redval = 0
 greenval = 0
 blueval = 0
 IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
-mote_id = 0;
-datapos = 0;
+mote_id = 0
 datax = []
 datay = []
 dataz = []
@@ -49,6 +48,7 @@ def receive():
 	UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
 	UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 	UDPSockReceive.bind(("",4321))
+    datapos = 0
 
 	while True:
 	    data,addr = UDPSockReceive.recvfrom(1024)
