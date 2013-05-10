@@ -76,6 +76,7 @@ def receive():
             
             print datax
             a.plot(datax)
+            canvas.clear()
             canvas.draw()
             time.sleep(2)
 
@@ -83,16 +84,17 @@ def receive():
                 datay.append(unpack("h",data[temp:(temp + 2)]))
 
             print datay
-            a.plot(datax)
+            a.plot(datay)
+            canvas.clear()
             canvas.draw()
             time.sleep(2)
 
             for temp in range(403,603,2):
                 dataz.append(unpack("h",data[temp:(temp + 2)]))
-                datapos += 1
 
             print dataz
-            a.plot(datax)
+            a.plot(dataz)
+            canvas.clear()
             canvas.draw()
             del datax[:]
             del datay[:]
