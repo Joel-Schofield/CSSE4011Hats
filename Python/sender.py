@@ -75,8 +75,8 @@ def receive():
                 datax.append(unpack("h",data[temp:(temp + 2)]))
             
             print datax
+            f.clear()
             a.plot(datax)
-            canvas.clear()
             canvas.draw()
             time.sleep(2)
 
@@ -85,7 +85,6 @@ def receive():
 
             print datay
             a.plot(datay)
-            canvas.clear()
             canvas.draw()
             time.sleep(2)
 
@@ -94,7 +93,6 @@ def receive():
 
             print dataz
             a.plot(dataz)
-            canvas.clear()
             canvas.draw()
             del datax[:]
             del datay[:]
