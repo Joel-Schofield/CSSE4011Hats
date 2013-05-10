@@ -20,6 +20,8 @@ redval = 0
 greenval = 0
 blueval = 0
 IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
+mote_id = 0;
+datapos = 0;
 datax = []
 datay = []
 dataz = []
@@ -56,15 +58,27 @@ def receive():
 	    else:
 	        print "\nReceived message"
 	        print data
-	        """
-	        datax = unpack("h",data[:300])
-	        print datax
-	        datay = unpack("h",data[300:600])
-	        print datay
-	        dataz = unpack("h",data[600:900])
-	        print dataz
-	        """
+	        mote_id = unpack("B",data[0])
+	        print mote_id
+	        
+	        for temp in range(1,201,2):
+		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datapos += 1
+		    
+		    print datax
+		    datapos = 0
 
+		    for temp in range(202,402,2):
+		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datapos += 1
+
+		    print datay
+
+		    for temp in range(403,603,2):
+		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datapos += 1
+
+		    print dataz
 
 # the tk root
 top = Tk()
