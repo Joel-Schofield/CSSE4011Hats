@@ -62,23 +62,23 @@ def receive():
 	        print mote_id
 	        
 	        for temp in range(1,201,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
 		        datapos += 1
 		    
-		    print datax
+			print datax
 		    datapos = 0
 
 		    for temp in range(202,402,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
 		        datapos += 1
 
-		    print datay
+            print datay
 
 		    for temp in range(403,603,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 1)])
+		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
 		        datapos += 1
 
-		    print dataz
+            print dataz
 
 # the tk root
 top = Tk()
