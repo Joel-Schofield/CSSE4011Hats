@@ -78,7 +78,6 @@ def receive():
             a.clear()
             a.plot(datax)
             canvas.draw()
-            time.sleep(2)
 
             for temp in range(202,402,2):
                 datay.append(unpack("h",data[temp:(temp + 2)]))
@@ -86,9 +85,8 @@ def receive():
             print datay
             a.plot(datay)
             canvas.draw()
-            time.sleep(2)
 
-            for temp in range(403,503,2):
+            for temp in range(403,601,2):
                 dataz.append(unpack("h",data[temp:(temp + 2)]))
 
             print dataz
