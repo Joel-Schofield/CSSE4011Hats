@@ -27,44 +27,44 @@ dataz = []
 
 #add callbacks here
 def send(): 
-	address = Entryid.get()
-	led = pack("BBBBB",int(Scalered.get())
-				   ,int(Scalegreen.get())
-				   ,int(Scaleblue.get())
-				   ,int(Entrygameid.get())
-				   ,int(Entrygameid.get()))
-	if(address == "ffff"):
-		for currentid in IDS:
-			time.sleep(.05)
-			UDPSock = socket(AF_INET6,SOCK_DGRAM)
-			UDPSock.connect((currentid,1234))
-			UDPSock.send(led)
-	else:
-		UDPSock = socket(AF_INET6,SOCK_DGRAM)
-		UDPSock.connect((address,1234))
-		UDPSock.send(led)
+    address = Entryid.get()
+    led = pack("BBBBB",int(Scalered.get())
+                   ,int(Scalegreen.get())
+                   ,int(Scaleblue.get())
+                   ,int(Entrygameid.get())
+                   ,int(Entrygameid.get()))
+    if(address == "ffff"):
+        for currentid in IDS:
+            time.sleep(.05)
+            UDPSock = socket(AF_INET6,SOCK_DGRAM)
+            UDPSock.connect((currentid,1234))
+            UDPSock.send(led)
+    else:
+        UDPSock = socket(AF_INET6,SOCK_DGRAM)
+        UDPSock.connect((address,1234))
+        UDPSock.send(led)
 
 def receive():
-	UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
-	UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-	UDPSockReceive.bind(("",4321))
+    UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
+    UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    UDPSockReceive.bind(("",4321))
     datapos = 0
 
-	while True:
-	    data,addr = UDPSockReceive.recvfrom(1024)
-	    if not data:
-	        print "Client has exited!"
-	        break
-	    else:
-	        print "\nReceived message"
-	        print data
-	        mote_id = unpack("B",data[0])
-	        print mote_id
-	        
-	        for temp in range(1,201,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
-		        datapos += 1
-		    
+    while True:
+        data,addr = UDPSockReceive.recvfrom(1024)
+        if not data:
+            print "Client has exited!"
+            break
+        else:
+            print "\nReceived message"
+            print data
+            mote_id = unpack("B",data[0])
+            print mote_id
+            
+            for temp in range(1,201,2):
+                datax[datapos] = unpack("h",data[temp:(temp + 2)])
+                datapos += 1
+            
             print datax
             datapos = 0
 
