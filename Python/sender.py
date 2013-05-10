@@ -66,9 +66,9 @@ def receive():
             print "Client has exited!"
             break
         else:
-            print "\nReceived message"
-            print data
-            mote_id = unpack("B",data[0])
+            print "\nReceived message from "
+            print mote_id = unpack("B",data[0])
+            print "\nchecking for: " + Entryid.get()[6:]
             if(mote_id[0] == (Entryid.get()[6:])):
             
                 for temp in range(1,201,2):
