@@ -65,20 +65,22 @@ def receive():
 		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
 		        datapos += 1
 		    
-			print datax
-		    datapos = 0
+            print datax
+            datapos = 0
 
-		    for temp in range(202,402,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
-		        datapos += 1
+            for temp in range(202,402,2):
+                datax[datapos] = unpack("h",data[temp:(temp + 1)])
+                datapos += 1
 
             print datay
+            datapos = 0
 
-		    for temp in range(403,603,2):
-		        datax[datapos] = unpack("h",data[temp:(temp + 2)])
-		        datapos += 1
+            for temp in range(403,603,2):
+                datax[datapos] = unpack("h",data[temp:(temp + 1)])
+                datapos += 1
 
             print dataz
+            datapos = 0
 
 # the tk root
 top = Tk()
