@@ -75,7 +75,7 @@ def receive():
                 datax.append(unpack("h",data[temp:(temp + 2)]))
             
             print datax
-            f.clear()
+            a.clear()
             a.plot(datax)
             canvas.draw()
             time.sleep(2)
