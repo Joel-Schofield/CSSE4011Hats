@@ -67,7 +67,8 @@ def receive():
             break
         else:
             print "\nReceived message from "
-            print mote_id = unpack("B",data[0])
+            mote_id = unpack("B",data[0])
+            print mote_id
             print "\nchecking for: " + Entryid.get()[6:]
             if(mote_id[0] == (Entryid.get()[6:])):
             
