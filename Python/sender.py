@@ -25,6 +25,16 @@ datax = []
 datay = []
 dataz = []
 
+"""
+def refreshFigure(x,y):
+    self.line1.set_data(x,y)
+    ax = self.canvas.figure.axes[0]
+    ax.set_xlim(x.min(), x.max())
+    ax.set_ylim(y.min(), y.max())        
+    self.canvas.draw()
+"""
+
+
 #add callbacks here
 def send(): 
     address = Entryid.get()
@@ -66,6 +76,7 @@ def receive():
             
             print datax
             a.plot(datax)
+            canvas.draw()
             time.sleep(2)
 
             for temp in range(202,402,2):
@@ -73,6 +84,7 @@ def receive():
 
             print datay
             a.plot(datax)
+            canvas.draw()
             time.sleep(2)
 
             for temp in range(403,603,2):
@@ -81,6 +93,7 @@ def receive():
 
             print dataz
             a.plot(datax)
+            canvas.draw()
             del datax[:]
             del datay[:]
             del dataz[:]
