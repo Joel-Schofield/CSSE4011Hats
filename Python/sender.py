@@ -70,7 +70,7 @@ def receive():
             mote_id = unpack("B",data[0])
             print mote_id
             print "\nchecking for: " + Entryid.get()[6:]
-            if(len(Entryid.get()) > 7):
+            if(len(Entryid.get()) > 6):
                 if(mote_id[0] == int((Entryid.get()[6:]))):
                 
                     for temp in range(1,201,2):
