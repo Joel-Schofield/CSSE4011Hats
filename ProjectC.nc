@@ -11,6 +11,12 @@
 
 #define REPORT_PERIOD 5L
 
+#define CMD_LED_TRACK 1
+#define CMD_AUDIO_TRACK 2
+#define CMD_GET_ADC 3
+
+#define NUM_LEDS 5
+
 struct radio_msg {
 	// led colour
 	uint8_t red;
@@ -35,6 +41,23 @@ struct radio_msg_send {
 	uint16_t datazvar[100];
 } ;
 
+
+struct {
+	uint32_t eventId; //ID of the event. Used as a unique identifier.
+	uint32_t commandId; //ID of the command
+	uint64_t startTime; //time at which the event will start (global synced time)
+	uint64_t dataLength; //data length in bytes
+	void* data;
+} typedef pktHeader;
+
+
+struct {
+	uint8_t ledColours[5][100];
+	uint64_t ledTimes[100];
+	uint8_t ledEventLen;
+	uint8_t ledEventCnt;
+} typedef ledTrack;
+
 module ProjectC {
 	uses {
 		interface Boot;
@@ -50,9 +73,7 @@ module ProjectC {
 		interface LocalTime<TMilli>;
     	interface GlobalTime<TMilli>;
 		
-    	// generic components
-		interface Leds;
-		interface RgbLed;
+    	// generic components.
 		interface GeneralIO as Button0;
 
 		// sensors
@@ -64,6 +85,11 @@ module ProjectC {
 
 		// timers
 		interface Timer<TMilli> as StatusTimer;
+
+		//leds
+		interface Timer<TMilli> as LedTrackTimer;
+		interface Leds;
+		interface RgbLed;
 
 		// ipv6lopan statistics
 		// interface BlipStatistics<ip_statistics_t> as IPStats;
@@ -79,6 +105,8 @@ module ProjectC {
 	nx_struct udp_report stats;
 	struct sockaddr_in6 route_dest;
 	struct sockaddr_in6 send_dest;
+
+	ledTrack currLedTrack;
 
 	uint16_t temp = 0;
 
@@ -146,16 +174,56 @@ module ProjectC {
 	// when you receive on port 1234 do the following
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
-		memcpy(&msg,payload,sizeof(msg));
+		
+		pktHeader header;
+
+		if (len >= sizeof(header)) {
+
+			memcpy(&header,payload,sizeof(header));
+
+			if (header.commandId == CMD_LED_TRACK) {
+
+				int cnt = 0;
+				int ev = 0;
+				int i = 0;
+
+				while (i < header.dataLength) {
+
+					if (cnt == NUM_LEDS) {
+						currLedTrack.ledTimes[ev] = *((uint64_t*)(payload + sizeof(header) + i));
+						cnt = 0;
+						ev++;
+						i += 4;
+					}
+					else {
+						currLedTrack.ledColours[cnt][ev] = *((uint8_t*)(payload + sizeof(header) + i));
+						i++;
+						cnt++;
+					}
+				}
+
+				currLedTrack.ledEventLen = ev;
+				currLedTrack.ledEventCnt = 0; //ready to play the newest led track!
+
+				//TODO: replace oneshot time with starttime parsed in command. (needs globalTime implemented).
+				call LedTrackTimer.startOneShot(0); 
+			}
+
+		}
+
+		/*
 		// check it is the correct length
 		if(len == sizeof(msg))
 		{
+			memcpy(&msg,payload,sizeof(msg));
+
 			// change the led colour
 			printf("game ID: %u sound ID: %u R: %u G: %u B: %u\n\r",
 				msg.gameId,msg.soundId,msg.red,msg.green,msg.blue);
 			call RgbLed.setColorRgb(msg.red, msg.green, msg.blue);
 			printfflush();
 		}
+		*/
 	}
 
 
@@ -180,6 +248,24 @@ module ProjectC {
 		}
 	}
 
+	event void LedTrackTimer.fired() 
+	  {
+
+	    printf("ledTrackFired!\n\r");
+		printfflush();
+
+		//TODO: code for updating the led colours.
+
+		currLedTrack.ledEventCnt++;
+
+		if (currLedTrack.ledEventCnt < currLedTrack.ledEventLen) {
+
+			//TODO: code is likely to have clock skew. better solution should be implemented once globaltime is implemented.
+			call LedTrackTimer.startOneShot(currLedTrack.ledTimes[currLedTrack.ledEventCnt] - 
+				currLedTrack.ledTimes[currLedTrack.ledEventCnt - 1]);
+		}
+	}
+
 	event void AdcTimer.fired() 
 	  {
 	    call AccelX.read();
@@ -190,7 +276,7 @@ module ProjectC {
 		printfflush();
 
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
-	  }
+	}
 
 	event void AccelX.readDone(error_t result, uint16_t val) {
 		if (result == SUCCESS) {

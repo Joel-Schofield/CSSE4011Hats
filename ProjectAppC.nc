@@ -32,7 +32,10 @@ implementation {
     ProjectC.Button0 -> ZigduinoDigitalPortsC.Digital1;
 
     // rgb led driver
+    components new TimerMilliC() as LedTrackTimer;
     components LedsC, new RgbLedC(6, 7);
+
+    ProjectC.LedTrackTimer -> LedTrackTimer;
     ProjectC.Leds -> LedsC;
     ProjectC.RgbLed -> RgbLedC;
 

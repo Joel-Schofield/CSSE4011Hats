@@ -1,0 +1,21 @@
+Command structure
+
+byte 0-3: (uint32_t) eventID 		-	ID of the event. Used to uniquely identify commands.
+byte 4-7: (uint32_t) command ID 	- 	ID of the command
+byte 8-15: (uint64_t) starttime 		- 	time in which the event will start
+byte 16-23: (uint64_t) datalength 	- 	if command has arguments to pass, set byte length of args here. interpreting the args is 											done on mote.
+byte 24-(24+datalength): (void) data[datalength]
+
+
+struct {
+	uint32_t eventId;
+	uint32_t commandId;
+	uint64_t starttime;
+	uint64_t datalength;
+	void* data;
+} typedef cmdPacket;
+
+
+startLedTrack packet format:
+
+[ <header> (24 bytes), timestamp, led1, led2, led3, led4, led5, timestamp, led1, led2, ... ];
