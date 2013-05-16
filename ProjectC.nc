@@ -41,7 +41,6 @@ struct radio_msg_send {
 	uint16_t datazvar[100];
 } ;
 
-
 struct {
 	uint32_t eventId; //ID of the event. Used as a unique identifier.
 	uint32_t commandId; //ID of the command
@@ -49,7 +48,6 @@ struct {
 	uint64_t dataLength; //data length in bytes
 	void* data;
 } typedef pktHeader;
-
 
 struct {
 	uint8_t ledColours[5][100];
@@ -130,7 +128,6 @@ module ProjectC {
 	uint8_t datazplace = 0;
 
 	// custom radiopacket
-	// the receive radio packet
 	struct radio_msg msg;
 	// the send radio packet
 	struct radio_msg_send msg_send;
@@ -143,9 +140,6 @@ module ProjectC {
 		call RadioControl.start();
 		call Button0.makeInput();
 		timerStarted = FALSE;
-
-		// call IPStats.clear();
-		// call Timer0.startPeriodic(700);
 
 		// if reporting to destination is enabled, periodicaly send to the station
 		send_dest.sin6_port = htons(4321);
@@ -177,31 +171,41 @@ module ProjectC {
 		
 		pktHeader header;
 
+		// if the size is correct for the header radio struct
 		if (len >= sizeof(header)) {
 
+			// copy the void radio packet to the header stuct
 			memcpy(&header,payload,sizeof(header));
 
+			// if the headers command is LED_TRACK
 			if (header.commandId == CMD_LED_TRACK) {
 
+				// initilise some varables
 				int cnt = 0;
 				int ev = 0;
 				int i = 0;
 
+				// while i is less then the headers datalength
 				while (i < header.dataLength) {
 
+					// if count is equal to NUM_LEDS
 					if (cnt == NUM_LEDS) {
+						// set the current led track
 						currLedTrack.ledTimes[ev] = *((uint64_t*)(payload + sizeof(header) + i));
 						cnt = 0;
 						ev++;
 						i += 4;
 					}
+					//  else 
 					else {
+						// increment count and i and shiz
 						currLedTrack.ledColours[cnt][ev] = *((uint8_t*)(payload + sizeof(header) + i));
 						i++;
 						cnt++;
 					}
 				}
 
+				
 				currLedTrack.ledEventLen = ev;
 				currLedTrack.ledEventCnt = 0; //ready to play the newest led track!
 
