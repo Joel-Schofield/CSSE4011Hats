@@ -116,7 +116,7 @@ module ProjectC {
   	uint16_t lastX = 0;
 	uint16_t lastY = 0;
 	uint16_t lastZ = 0;
-	uint16_t SAMPLING_PERIOD = 100; //adc sample period in millisecs
+	uint16_t SAMPLING_PERIOD = 50; //adc sample period in millisecs
 
 	// data from the accelerometer
 	uint16_t datax[100];

@@ -80,7 +80,7 @@ def receive():
                     canvas.draw()
 
                     for temp in range(401,601,2):
-                        dataz.append(unpack("h",data[temp:(temp + 2)]))
+                        dataz.append(unpack("h",data[temp:(temp + 2)]) - 120)
 
                     print dataz
                     a.plot(dataz)
