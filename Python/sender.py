@@ -24,6 +24,9 @@ mote_id = 0
 datax = []
 datay = []
 dataz = []
+highgradx = 0
+highgrady = 0
+highgradz = 0
 
 #add callbacks here
 def send(): 
@@ -85,6 +88,36 @@ def receive():
                     print dataz
                     a.plot(dataz)
                     canvas.draw()
+
+                    # calculate some gradiants here
+                    # highest x, y and z
+                    
+                    for temp in range(0,90,10):
+                        
+                        # x components
+                        if( ((datax[temp] - datax[temp+10])/(temp)) > highgradx ):
+                            highgradx = ((datax[temp] - datax[temp+10])/(temp))
+                        else if( ((datax[temp] - datax[temp+10])/(temp)) < highgradx ):
+                            highgradx = ((datax[temp] - datax[temp+10])/(temp))
+                            
+                        # y components
+                        if( ((datay[temp] - datay[temp+10])/(temp)) > highgrady ):
+                            highgrady = ((datay[temp] - datay[temp+10])/(temp))
+                        else if( ((datay[temp] - datay[temp+10])/(temp)) < highgrady ):
+                            highgrady = ((datay[temp] - datay[temp+10])/(temp))   
+
+                        # z compoenents
+                        if( ((dataz[temp] - dataz[temp+10])/(temp)) > highgradz ):
+                            highgradz = ((dataz[temp] - dataz[temp+10])/(temp))
+                        else if( ((dataz[temp] - dataz[temp+10])/(temp)) < highgradz ):
+                            highgradz = ((dataz[temp] - dataz[temp+10])/(temp))   
+
+                    # print the highest changes in gradiant
+                    
+                    print "Grad x: " + highgradx
+                    print "Grad y: " + highgrady
+                    print "Grad z: " + highgradz
+
                     del datax[:]
                     del datay[:]
                     del dataz[:]
