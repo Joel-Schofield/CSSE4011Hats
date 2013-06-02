@@ -25,16 +25,6 @@ datax = []
 datay = []
 dataz = []
 
-"""
-def refreshFigure(x,y):
-    self.line1.set_data(x,y)
-    ax = self.canvas.figure.axes[0]
-    ax.set_xlim(x.min(), x.max())
-    ax.set_ylim(y.min(), y.max())        
-    self.canvas.draw()
-"""
-
-
 #add callbacks here
 def send(): 
     address = Entryid.get()
@@ -54,6 +44,7 @@ def send():
         UDPSock.connect((address,1234))
         UDPSock.send(led)
 
+# receive function for getting data from the zig mote
 def receive():
     UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
     UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -81,14 +72,14 @@ def receive():
                     a.plot(datax)
                     canvas.draw()
 
-                    for temp in range(202,402,2):
+                    for temp in range(201,401,2):
                         datay.append(unpack("h",data[temp:(temp + 2)]))
 
                     print datay
                     a.plot(datay)
                     canvas.draw()
 
-                    for temp in range(403,601,2):
+                    for temp in range(401,601,2):
                         dataz.append(unpack("h",data[temp:(temp + 2)]))
 
                     print dataz

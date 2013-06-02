@@ -287,7 +287,7 @@ module ProjectC {
 			lastX = val;
 			
 			// store the data
-			datax[dataxplace] = val;
+			datax[dataxplace] = (val -450);
 			dataxplace++;
 
 			// check for overflow
@@ -301,7 +301,7 @@ module ProjectC {
 			lastY = val;
 
 			// store the data
-			datay[datayplace] = val;
+			datay[datayplace] = (val - 450);
 			datayplace++;
 
 			// check for overflow
@@ -315,7 +315,7 @@ module ProjectC {
 			lastZ = val;
 
 			// store the data
-			dataz[datazplace] = val;
+			dataz[datazplace] = (val - 450);
 			datazplace++;
 
 			// check for overflow
@@ -325,15 +325,8 @@ module ProjectC {
 				// send the data
 				printf("sending accelerometer\n");
 				printfflush();
-/*
-				// make up some data
-				for(temp = 0; temp < 100; temp++) {
-					datax[temp] = call Random.rand16();
-					datay[temp] = call Random.rand16();
-					dataz[temp] = call Random.rand16();
-
-				}
-*/
+				
+				// pack the data
 				msg_send.id = TOS_NODE_ID;
 				memcpy(&msg_send.dataxvar,datax,sizeof(datax));
 				memcpy(&msg_send.datayvar,datay,sizeof(datay));
