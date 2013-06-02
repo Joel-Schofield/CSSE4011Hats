@@ -325,13 +325,15 @@ module ProjectC {
 				// send the data
 				printf("sending accelerometer\n");
 				printfflush();
-
+/*
 				// make up some data
 				for(temp = 0; temp < 100; temp++) {
 					datax[temp] = call Random.rand16();
 					datay[temp] = call Random.rand16();
 					dataz[temp] = call Random.rand16();
+
 				}
+*/
 				msg_send.id = TOS_NODE_ID;
 				memcpy(&msg_send.dataxvar,datax,sizeof(datax));
 				memcpy(&msg_send.datayvar,datay,sizeof(datay));
