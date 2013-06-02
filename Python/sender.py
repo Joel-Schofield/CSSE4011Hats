@@ -96,21 +96,21 @@ def receive():
                         
                         # x components
                         if( ((datax[temp] - datax[temp+10])/(temp)) > highgradx ):
-                            highgradx = ((datax[temp] - datax[temp+10])/(temp))
+                            highgradx = ((datax[temp] - datax[temp+10])/(10))
                         elif( ((datax[temp] - datax[temp+10])/(temp)) < highgradx ):
-                            highgradx = ((datax[temp] - datax[temp+10])/(temp))
+                            highgradx = ((datax[temp] - datax[temp+10])/(10))
                             
                         # y components
                         if( ((datay[temp] - datay[temp+10])/(temp)) > highgrady ):
-                            highgrady = ((datay[temp] - datay[temp+10])/(temp))
+                            highgrady = ((datay[temp] - datay[temp+10])/(10))
                         elif( ((datay[temp] - datay[temp+10])/(temp)) < highgrady ):
-                            highgrady = ((datay[temp] - datay[temp+10])/(temp))   
+                            highgrady = ((datay[temp] - datay[temp+10])/(10))   
 
                         # z compoenents
                         if( ((dataz[temp] - dataz[temp+10])/(temp)) > highgradz ):
-                            highgradz = ((dataz[temp] - dataz[temp+10])/(temp))
+                            highgradz = ((dataz[temp] - dataz[temp+10])/(10))
                         elif( ((dataz[temp] - dataz[temp+10])/(temp)) < highgradz ):
-                            highgradz = ((dataz[temp] - dataz[temp+10])/(temp))   
+                            highgradz = ((dataz[temp] - dataz[temp+10])/(10))   
 
                     # print the highest changes in gradiant
                     
