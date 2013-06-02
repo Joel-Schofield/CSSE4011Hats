@@ -65,7 +65,7 @@ def receive():
                 if(mote_id[0] == int((Entryid.get()[6:]))):
                 
                     for temp in range(1,201,2):
-                        datax.append((int)unpack("h",data[temp:(temp + 2)]))
+                        datax.append((int)(unpack("h",data[temp:(temp + 2)])) )
                     
                     print datax
                     a.clear()
@@ -73,7 +73,7 @@ def receive():
                     canvas.draw()
 
                     for temp in range(201,401,2):
-                        datay.append((int)unpack("h",data[temp:(temp + 2)]))
+                        datay.append((int)(unpack("h",data[temp:(temp + 2)])) )
 
                     print datay
                     a.plot(datay)
