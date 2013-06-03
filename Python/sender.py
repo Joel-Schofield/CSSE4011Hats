@@ -13,20 +13,120 @@ from Tkinter import *
 from threading import Thread
 import time
 
-
-
-# global varables
+# gui varables
 redval = 0
 greenval = 0
 blueval = 0
 IDS = ["fec0::3","fec0::4","fec0::5","fec0::6"]
 mote_id = 0
+
+# mote data
 datax = []
 datay = []
 dataz = []
 highgradx = 0
 highgrady = 0
 highgradz = 0
+motenumber = 0
+
+# game varables
+mote_structs = []
+
+# classes
+class mote:
+    """ initiliastion """
+    def __init__(self):
+        self.id = motenumber
+        self.game = 0
+        self.score = 0
+        self.partners = []
+        self.datax = []
+        self.datay = []
+        self.dataz = []
+        self.gradx = 0
+        self.grady = 0
+        self.gradz = 0
+
+    """ change the score """
+    def increment_score(self, x):
+        self.score += x
+
+    """ reset the score """
+    def reset_score(self):
+        self.score = 0
+
+    """ add a game to the mote """
+    def add_game(self, game):
+        self.game = game
+
+    """ add another mote that is participating in the same game """
+    def add_partner(self, partner):
+        self.partner.append(partner)
+
+    """ delete the accelerometer data """
+    def delete_data(self):
+        del self.datax[:]
+        del self.datay[:]
+        del self.dataz[:]
+
+    """ decode the string received over the udp socket """
+    def decode(socket_data):
+        print "decoding"
+
+        # mote id
+        mote_id = unpack("B",socket_data[0])
+        print "mote: " + (str)(mote_id)
+        self.id = mote_id
+
+        # accelerometer data
+        for temp in range(1,201,2):
+            self.datax.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
+        print self.datax
+
+        for temp in range(201,401,2):
+            self.datay.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
+        print self.datay
+
+        for temp in range(401,601,2):
+            self.dataz.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
+        print self.dataz
+        
+    """ draw the data on the graph this is mainly for debugging """
+    def draw(self):
+        a.clear()
+        a.plot(self.datax)
+        a.plot(self.datay)
+        a.plot(self.dataz)
+        canvas.draw()
+
+    """ calculate the maximum gradiant of the data decoded """
+    def calc_grad(self):
+        for temp in range(0,90,10):
+
+            # x components
+            if( ((self.datax[temp] - self.datax[temp+10])/(10)) > self.gradx ):
+                self.gradx = ((self.datax[temp] - self.datax[temp+10])/(10))
+            elif( ((self.datax[temp] - self.datax[temp+10])/(10)) < self.gradx ):
+                self.gradx = ((self.datax[temp] - self.datax[temp+10])/(10))
+                
+            # y components
+            if( ((self.datay[temp] - self.datay[temp+10])/(10)) > self.grady ):
+                self.grady = ((self.datay[temp] - self.datay[temp+10])/(10))
+            elif( ((self.datay[temp] - self.datay[temp+10])/(10)) < self.grady ):
+                self.grady = ((self.datay[temp] - self.datay[temp+10])/(10))   
+
+            # z compoenents
+            if( ((self.dataz[temp] - self.dataz[temp+10])/(10)) > self.gradz ):
+                self.gradz = ((self.dataz[temp] - self.dataz[temp+10])/(10))
+            elif( ((self.dataz[temp] - self.dataz[temp+10])/(10)) < self.gradz ):
+                self.gradz = ((self.dataz[temp] - self.dataz[temp+10])/(10))   
+
+        # print the highest changes in gradiant
+        
+        print "Grad x: " + self.gradx
+        print "Grad y: " + self.grady
+        print "Grad z: " + self.gradz
+
 
 #add callbacks here
 def send(): 
@@ -60,67 +160,21 @@ def receive():
             print "Client has exited!"
             break
         else:
-            print "\nReceived message from "
-            mote_id = unpack("B",data[0])
-            print mote_id
-            print "\nchecking for: " + Entryid.get()[6:]
-            if(len(Entryid.get()) > 6):
-                if(mote_id[0] == int((Entryid.get()[6:]))):
+            mote_id = unpack("B",data[0])[0]
+            print "\nReceived message from " + (str)(mote_id)
+
+            mote_structs[mote_id].decode(data)
+            mote_structs[mote_id].calc_grad()
+
+            
                 
-                    for temp in range(1,201,2):
-                        datax.append((int)(unpack("h",data[temp:(temp + 2)])[0]) - 5)
-                    
-                    print datax
-                    a.clear()
-                    a.plot(datax)
-                    canvas.draw()
+# mainloop
 
-                    for temp in range(201,401,2):
-                        datay.append((int)(unpack("h",data[temp:(temp + 2)])[0]) )
-
-                    print datay
-                    a.plot(datay)
-                    canvas.draw()
-
-                    for temp in range(401,601,2):
-                        dataz.append((int)(unpack("h",data[temp:(temp + 2)])[0]) - 125)
-
-                    print dataz
-                    a.plot(dataz)
-                    canvas.draw()
-
-                    # calculate some gradiants here
-                    # highest x, y and z
-                    
-                    for temp in range(0,90,10):
-                        
-                        # x components
-                        if( ((datax[temp] - datax[temp+10])/(10)) > highgradx ):
-                            highgradx = ((datax[temp] - datax[temp+10])/(10))
-                        elif( ((datax[temp] - datax[temp+10])/(10)) < highgradx ):
-                            highgradx = ((datax[temp] - datax[temp+10])/(10))
-                            
-                        # y components
-                        if( ((datay[temp] - datay[temp+10])/(10)) > highgrady ):
-                            highgrady = ((datay[temp] - datay[temp+10])/(10))
-                        elif( ((datay[temp] - datay[temp+10])/(10)) < highgrady ):
-                            highgrady = ((datay[temp] - datay[temp+10])/(10))   
-
-                        # z compoenents
-                        if( ((dataz[temp] - dataz[temp+10])/(10)) > highgradz ):
-                            highgradz = ((dataz[temp] - dataz[temp+10])/(10))
-                        elif( ((dataz[temp] - dataz[temp+10])/(10)) < highgradz ):
-                            highgradz = ((dataz[temp] - dataz[temp+10])/(10))   
-
-                    # print the highest changes in gradiant
-                    
-                    print "Grad x: " + highgradx
-                    print "Grad y: " + highgrady
-                    print "Grad z: " + highgradz
-
-                    del datax[:]
-                    del datay[:]
-                    del dataz[:]
+# initilise the structues
+motenumber = 0
+for temp in range(0,32):
+    mote_structs.append(mote())
+    motenumber += 1        
 
 # the tk root
 top = Tk()
@@ -174,7 +228,6 @@ greenlable.pack(side = LEFT, anchor = W, padx = 5)
 Scalegreen.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
 bluelable.pack(side = LEFT, anchor = W, padx = 9)
 Scaleblue.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
-
 
 # Mote ID frame
 Sendl = Label(Moteselectframe, text = "TOS__ID: ")
