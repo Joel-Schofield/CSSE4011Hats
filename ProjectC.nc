@@ -51,14 +51,14 @@ struct {
 
 struct {
 	uint8_t ledColours[100][5][3]; //first element is the event, 2nd is which led (1-NUM_LEDS), 3rd is each colour element (RGB).
-	uint64_t ledTimes[100]; //first event time should always be 0. track times do not involve global time, and are relative.
+	uint32_t ledTimes[100]; //first event time should always be 0. track times do not involve global time, and are relative.
 	uint8_t ledEventLen;
 	uint8_t ledEventCnt;
 } typedef ledTrack;
 
 struct {
 	uint16_t audFreqs[100];
-	uint64_t audTimes[100];
+	uint32_t audTimes[100];
 	uint8_t audEventLen;
 	uint8_t audEventCnt;
 } typedef audTrack;
@@ -160,7 +160,7 @@ module ProjectC {
 		// if reporting to destination is enabled, periodicaly send to the station
 		send_dest.sin6_port = htons(4321);
 		inet_pton6(REPORT_DEST, &send_dest.sin6_addr);
-		call StatusTimer.startOneShot(5000);
+		call StatusTimer.startOneShot(0);
 
 		// bind to ports for each udp service
 		call Echo.bind(7);
@@ -188,7 +188,7 @@ module ProjectC {
 		pktHeader header; //TODO: migrate to use pointer, no advantage to copying data.
 		unsigned char* ptr;
 
-		ptr = &header;
+		ptr = payload;
 
 		// if the size is correct for the header radio struct
 		if (len >= sizeof(header)) {
@@ -200,49 +200,49 @@ module ProjectC {
 			if (header.commandId == CMD_LED_TRACK) {
 
 				// initilise some variables
-				int ledId = 0; //which led we are looking at
+				int ledId = NUM_LEDS; //which led we are looking at
 				int col = 0; //which colour (RGB)
 				int ev = 0; //event count
 				int i = 0;
 
-
-				// while i is less then the headers datalength
 				while (i < header.dataLength) {
 
-					// if count is equal to NUM_LEDS
 					if (ledId == NUM_LEDS) {
-						// set the current led track
-						currLedTrack.ledTimes[ev] = *((uint64_t*)(payload + sizeof(header) + i));
+
+						currLedTrack.ledTimes[ev] = *((uint32_t*)(payload + 24 + i));
 						ledId = 0;
-						ev++;
 						i += 4;
 					}
-					//  else 
 					else {
 						// process the ledtrack.
-						currLedTrack.ledColours[ev][ledId][col] = *((uint8_t*)(payload + sizeof(header) + i));
+						currLedTrack.ledColours[ev][ledId][col] = *((uint8_t*)(payload + 24 + i));
+
+						col++;
 
 						if (col == 3) { //3 as one for each primary light colour.
 							col = 0;
 							ledId++;
 						}
-						else
-							col++;
+
+						if (ledId == NUM_LEDS) //finished this event, move to next one.
+							ev++;
 
 						i++;
 					}
 				}
 
 
-				for (i=0; i < 50; i++)
-					printf("%02x", ptr[i]);
+				for (i=0; i < 70; i++)
+					printf("%02x:", ptr[i]);
 
 				printf("\n\r");
 
 				printf("event Id: %lu\n\r", header.eventId);
 				printf("cmd Id: %lu\n\r", header.commandId);
-				printf("starttime: %llu\n\r", header.startTime);
-				printf("datalen: %llu\n\r", header.dataLength);
+				printf("ledTimes: %lu\n\r", currLedTrack.ledTimes[0]);
+				printf("ledTimes: %lu\n\r", currLedTrack.ledTimes[1]);
+
+
 
 				printf("\n\r");
 
@@ -263,17 +263,24 @@ module ProjectC {
 
 				while (i < header.dataLength) {
 
-					if (ev%2 == 0) {
-						currAudTrack.audTimes[ev++] = *((uint64_t*)(payload + sizeof(header) + i));
+					currAudTrack.audTimes[ev] = *((uint32_t*)(payload + 24 + i));
+					i += 4;
 
-						i += 4;
-					}
-					else {
+					currAudTrack.audFreqs[ev] = *((uint16_t*)(payload + 24 + i));
+					i += 2;
 
-						currAudTrack.audTimes[ev] = *((uint16_t*)(payload + sizeof(header) + i));
-						i++;
-					}
+					ev++;
+
 				}
+
+				for (i=0; i < 50; i++)
+					printf("%02x:", ptr[i]);
+
+				/*
+				printf("\n\r")
+				printf("datalen: %d\n\r", header.dataLength);
+				printf("datalen: %d\n\r", header.dataLength);
+				*/
 
 				currAudTrack.audEventLen = ev;
 				currAudTrack.audEventCnt = 0; //ready to play the newest audio track!
@@ -323,8 +330,8 @@ module ProjectC {
 			timerStarted = TRUE;
 
 			currLedTrack.ledTimes[0] = 0;
-			currLedTrack.ledTimes[1] = 1000;
-			currLedTrack.ledTimes[2] = 5000;
+			currLedTrack.ledTimes[1] = 200;
+			currLedTrack.ledTimes[2] = 400;
 
 			currLedTrack.ledEventLen = 3;
 
@@ -351,16 +358,39 @@ module ProjectC {
 
 			//Example:
 			//1) Initialize pwm:
-			/*
+			
 			PRR1 &=    ~(1 << 3);
-            OCR3A = 0X545;
+            OCR3A = 0X1A45;
             TCCR3B |= (1<<3)|(1<<0);  
 			//2) Active pwm:
 			TCCR3A |=    (1 << 6);
 
-			//3) Desactive pwm:
+			//3) Deactive pwm:
 			TCCR3A &=    ~(1 << 6);
-			*/
+
+
+			//dummy audtrack.
+
+			currAudTrack.audFreqs[0] = 0X1A45;
+			currAudTrack.audFreqs[1] = 0X2045;
+			currAudTrack.audFreqs[2] = 0X2A45;
+			currAudTrack.audFreqs[3] = 0X2045;
+			currAudTrack.audFreqs[3] = 0X1A45;
+			currAudTrack.audFreqs[3] = 0X1A45;
+			currAudTrack.audFreqs[3] = 0X1A45;
+
+			currAudTrack.audTimes[0] = 0;
+			currAudTrack.audTimes[1] = 1000;
+			currAudTrack.audTimes[2] = 2000;
+			currAudTrack.audTimes[3] = 3000;
+			currAudTrack.audTimes[4] = 4000;
+
+
+			currAudTrack.audEventLen = 5;
+			currAudTrack.audEventCnt = 0;
+
+			call AudTrackTimer.startOneShot(0);
+			
 		}
 	}
 
@@ -399,6 +429,16 @@ module ProjectC {
 	event void AudTrackTimer.fired() {
 
 		//TODO: code to make beeps.
+
+	
+            OCR3A = currAudTrack.audFreqs[currAudTrack.audEventCnt];
+			
+			
+			if (currAudTrack.audFreqs[currAudTrack.audEventCnt] != 0)
+				TCCR3A |=    (1 << 6); //2) Active pwm:
+			else
+				TCCR3A &=    ~(1 << 6); //deactivate pwm
+
 
 		currAudTrack.audEventCnt++;
 
@@ -463,7 +503,7 @@ module ProjectC {
 				// reset the data
 				datazplace = 0;
 				// send the data
-				printf("sending accelerometer\n");
+				printf("sending accelerometer\n\r");
 				printfflush();
 				
 				// pack the data
