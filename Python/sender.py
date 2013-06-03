@@ -172,14 +172,14 @@ def receive():
             mote_structs[mote_id].calc_grad()
             mote_structs[mote_id].draw()
 
-            if(int(Entrygameid.get()) == 1):
+            if((int)(Entrygameid.get()) == 1):
                 if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
                     # add it to list of game ready hats
                     # this list when there is more then 1 hat will begin a game
                     # check that it hasn't already been added to this array first
                     try:
                         # this will give i a value if it is in the list already
-                        i = game_ready_hats.index()
+                        i = game_ready_hats.index(mote_structs[mote_id])
                         print "hat already ready to start game"
                     except ValueError:
                         # not in list
@@ -276,7 +276,7 @@ Entryid.pack(side = RIGHT, anchor = CENTER)
 
 # Game ID frame
 Gameidl = Label(Gameidselectframe, text = "Game ID: ")
-Entrygameid = Entry(Gameidselectframe, bd = 5)
+Entrygameid = Entry(Gameidselectframe, bd = 5, text = "1")
 
 #pack them
 Gameidl.pack(side = LEFT)
