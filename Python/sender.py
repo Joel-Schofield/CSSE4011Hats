@@ -12,6 +12,7 @@ from struct import pack, unpack
 from Tkinter import *
 from threading import Thread
 import time
+import random
 
 # gui varables
 redval = 0
@@ -32,6 +33,9 @@ motenumber = 0
 # game varables
 mote_structs = []
 grad_cal_distance = 0
+hat_dip_level = 0
+game_ready_hats = []
+game_threads = []
 
 # classes
 class mote:
@@ -127,6 +131,7 @@ class mote:
 
 
 #add callbacks here
+""" send data to the motes """ 
 def send(): 
     address = Entryid.get()
     led = pack("BBBBB",int(Scalered.get())
@@ -146,6 +151,7 @@ def send():
         UDPSock.send(led)
 
 # receive function for getting data from the zig mote
+""" receive data from the motes """
 def receive():
     UDPSockReceive = socket(AF_INET6,SOCK_DGRAM)
     UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -166,12 +172,41 @@ def receive():
             mote_structs[mote_id].calc_grad()
             mote_structs[mote_id].draw()
 
-            
-                
+            if(int(Entrygameid.get()) == 1):
+                if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
+                    # add it to list of game ready hats
+                    # this list when there is more then 1 hat will begin a game
+                    # check that it hasn't already been added to this array first
+                    try:
+                        # this will give i a value if it is in the list already
+                        i = game_ready_hats.index()
+                        print "hat already ready to start game"
+                    except ValueError:
+                        # not in list
+                        i = -1 
+                        print "hat moved to ready list"
+                        game_ready_hats.append(mote_structs[mote_id])
+
+                    if(game_ready_hats.length() > 1):
+                        # start game
+                        # thread off
+                        # should make a list of threads
+                        game_thread_1 = Thread(target = game_1)
+                        game_thread_1.start()
+                    
+
+""" the first game designed """
+def game_1():
+    # run till someone losses
+    while True:
+        print "running game 1 wohoooo"
+        time.sleep((random.randint(0,100))/10)
+                     
 # mainloop
 
 # initilise the structues
 grad_cal_distance = 5
+hat_dip_level = 10
 motenumber = 0
 for temp in range(0,32):
     mote_structs.append(mote())
