@@ -70,7 +70,7 @@ class mote:
         del self.dataz[:]
 
     """ decode the string received over the udp socket """
-    def decode(slef,socket_data):
+    def decode(self,socket_data):
         print "decoding"
 
         # mote id
