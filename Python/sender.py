@@ -69,6 +69,9 @@ class mote:
         del self.datax[:]
         del self.datay[:]
         del self.dataz[:]
+        del self.gradx
+        del self.grady
+        del self.gradz
 
     """ decode the string received over the udp socket """
     def decode(self,socket_data):
