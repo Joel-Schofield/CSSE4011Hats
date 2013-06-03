@@ -30,6 +30,10 @@ highgrady = 0
 highgradz = 0
 motenumber = 0
 ledtrack = []
+audiotrack = []
+global_time = 0
+timestamp_led_combo = []
+copy_list = []
 
 # game varables
 mote_structs = []
@@ -37,6 +41,7 @@ grad_cal_distance = 0
 hat_dip_level = 0
 game_ready_hats = []
 game_threads = []
+thread_number = 0
 
 # classes
 class mote:
@@ -130,49 +135,37 @@ class mote:
         print "Grad y: " + (str)(self.grady) 
         print "Grad z: " + (str)(self.gradz)
 
+""" a class to hold all the running game threads """
+class game_thread:
+    def __init__(self,game_thread,thread_number):
+        self.game_id = 0
+        self.thread_id = game_thread
 
-#add callbacks here
+    def set_game_id(self,game_id):
+        self.game_id = game_id
+
+    def set_thread_id(self,thread_id):
+        self.thread_id = thread_id
+
+    def get_game_id(self):
+        return self.game_id
+
+    def get_thread_id(self):
+        return self.thread_id
+
 """ send data to the motes """ 
 def send(): 
     address = Entryid.get()
-    global_time = 600000
-    timestamp_led_combo = []
-    copy_list = []
 
-    events = 1
-    datalength = 19*events
+    send_data = make_led_track(10,20)
+    UDPSock = socket(AF_INET6,SOCK_DGRAM)
+    UDPSock.connect((address,1234))
+    UDPSock.send(send_data)
+    send_data = make_audio_track(10,20)
+    UDPSock = socket(AF_INET6,SOCK_DGRAM)
+    UDPSock.connect((address,1234))
+    UDPSock.send(send_data)
 
-    # put header in here
-    send_data = pack("IIQQ",4294967295,1,0,datalength)
-    print send_data
-
-    # make a random led track
-    # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
-    
-    for temp2 in range (0,(datalength/19)):
-        timestamp_led_combo.append(1)
-        for temp in range (0,16):
-            timestamp_led_combo.append(127)
-        ledtrack.append(timestamp_led_combo[:])
-
-        print "timestamp_led_combo" + (str)(timestamp_led_combo)
-        # delete the combo
-        del timestamp_led_combo[:]
-
-    print ledtrack
-
-    # pack the list
-    for temp in range(0,(datalength/19)):
-        print "timestamp" + (str)(ledtrack[temp][0])
-        send_data += pack("I",ledtrack[temp][0])
-        print pack("I",(int)(ledtrack[temp][0]))
-        
-        for temp2 in range(1,17):
-            send_data += pack("B",(int)(ledtrack[temp][temp2]))
-            print "for: [" + (str)(temp) + "][" + (str)(temp2) + "] " + send_data
-                           
-    print send_data
-    
     # broadcast
     if(address == "ffff"):
         for currentid in IDS:
@@ -182,11 +175,87 @@ def send():
             UDPSock.send(send_data)
     # specific mote
     else:
+        """
         UDPSock = socket(AF_INET6,SOCK_DGRAM)
         UDPSock.connect((address,1234))
         UDPSock.send(send_data)
+        """
+    send_data = 0
+
+""" starting_global_time is only for testing number_of_events is important """
+def make_led_track(starting_global_time,number_of_events):
+    global_time = starting_global_time
+    timestamp_led_combo = []
+    copy_list = []
+    events = number_of_events
+    datalength = 19*events
+
+    # put header in here
+    send_data = pack("IIQQ",4294967295,1,0,datalength)
+
+    # make a random led track
+    # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
+    for temp2 in range (0,(datalength/19)):
+        timestamp_led_combo.append(global_time)
+        global_time += random.randint(1,1000)
+        for temp in range (0,16):
+            timestamp_led_combo.append(random.randint(0,255))
+        ledtrack.append(timestamp_led_combo[:])
+        
+        # delete the combo
+        del timestamp_led_combo[:]
+
+    # pack the list
+    for temp in range(0,(datalength/19)):
+        send_data += pack("I",(ledtrack[temp][0:1][0]))
+        
+        for temp2 in range(1,16):
+            send_data += pack("B", (int)(ledtrack[temp][temp2:(temp2+1)][0]))
+
+    hexprintout = send_data[:]
+
+    print "LED TRACK"
+    print ':'.join(x.encode('hex') for x in hexprintout)
 
     del ledtrack[:]
+    return send_data
+
+def make_audio_track(starting_global_time,number_of_events):
+    global_time = starting_global_time
+    timestamp_audio_combo = []
+    copy_list = []
+    audiotrack = []
+    events = number_of_events
+    # 4 + 2 = 6
+    datalength = 6*events
+
+    send_data = pack("IIQQ",4294967295,2,0,datalength)
+
+    # format [timestamp] [frequency]
+    for temp2 in range (0,(datalength/6)):
+        timestamp_audio_combo.append(global_time)
+        global_time += random.randint(1,1000)
+        if(temp2 == (number_of_events - 1)):
+            timestamp_audio_combo.append(0)
+        else:
+            timestamp_audio_combo.append(random.randint(0,20000))
+        audiotrack.append(timestamp_audio_combo[:])
+
+        # delete the combo
+        del timestamp_audio_combo[:]
+
+    # pack the list
+    for temp in range(0,(datalength/6)):
+        send_data += pack("I",(audiotrack[temp][0:1][0]))
+        send_data += pack("H", (int)(audiotrack[temp][1:2][0]))
+
+    hexprintout = send_data[:]
+
+    print "AUDIO TRACK"
+    print ':'.join(x.encode('hex') for x in hexprintout)
+
+    del audiotrack
+    return send_data
 
 # receive function for getting data from the zig mote
 """ receive data from the motes """
@@ -229,10 +298,12 @@ def receive():
                         # start game
                         # thread off
                         # should make a list of threads
+                        game_threads.append(Thread(target = game_1),thread_number)
+
+                        # start the thread
                         game_thread_1 = Thread(target = game_1)
                         game_thread_1.start()
                     
-
 """ the first game designed """
 def game_1():
     # run till someone losses
@@ -245,6 +316,7 @@ def game_1():
 # initilise the structues
 grad_cal_distance = 5
 hat_dip_level = 10
+thread_number = 0
 motenumber = 0
 for temp in range(0,32):
     mote_structs.append(mote())
