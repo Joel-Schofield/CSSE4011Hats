@@ -29,6 +29,7 @@ highgradx = 0
 highgrady = 0
 highgradz = 0
 motenumber = 0
+ledtrack = []
 
 # game varables
 mote_structs = []
@@ -134,21 +135,58 @@ class mote:
 """ send data to the motes """ 
 def send(): 
     address = Entryid.get()
-    led = pack("BBBBB",int(Scalered.get())
-                   ,int(Scalegreen.get())
-                   ,int(Scaleblue.get())
-                   ,int(Entrygameid.get())
-                   ,int(Entrygameid.get()))
+    global_time = 600000
+    timestamp_led_combo = []
+    copy_list = []
+
+    events = 1
+    datalength = 19*events
+
+    # put header in here
+    send_data = pack("IIQQ",4294967295,1,0,datalength)
+    print send_data
+
+    # make a random led track
+    # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
+    
+    for temp2 in range (0,(datalength/19)):
+        timestamp_led_combo.append(1)
+        for temp in range (0,16):
+            timestamp_led_combo.append(127)
+        ledtrack.append(timestamp_led_combo[:])
+
+        print "timestamp_led_combo" + (str)(timestamp_led_combo)
+        # delete the combo
+        del timestamp_led_combo[:]
+
+    print ledtrack
+
+    # pack the list
+    for temp in range(0,(datalength/19)):
+        print "timestamp" + (str)(ledtrack[temp][0])
+        send_data += pack("I",ledtrack[temp][0])
+        print pack("I",(int)(ledtrack[temp][0]))
+        
+        for temp2 in range(1,17):
+            send_data += pack("B",(int)(ledtrack[temp][temp2]))
+            print "for: [" + (str)(temp) + "][" + (str)(temp2) + "] " + send_data
+                           
+    print send_data
+    
+    # broadcast
     if(address == "ffff"):
         for currentid in IDS:
             time.sleep(.05)
             UDPSock = socket(AF_INET6,SOCK_DGRAM)
             UDPSock.connect((currentid,1234))
-            UDPSock.send(led)
+            UDPSock.send(send_data)
+    # specific mote
     else:
         UDPSock = socket(AF_INET6,SOCK_DGRAM)
         UDPSock.connect((address,1234))
-        UDPSock.send(led)
+        UDPSock.send(send_data)
+
+    del ledtrack[:]
 
 # receive function for getting data from the zig mote
 """ receive data from the motes """
@@ -179,7 +217,7 @@ def receive():
                     # check that it hasn't already been added to this array first
                     try:
                         # this will give i a value if it is in the list already
-                        i = game_ready_hats.index()
+                        i = game_ready_hats.index(mote_structs[mote_id])
                         print "hat already ready to start game"
                     except ValueError:
                         # not in list
@@ -187,7 +225,7 @@ def receive():
                         print "hat moved to ready list"
                         game_ready_hats.append(mote_structs[mote_id])
 
-                    if(game_ready_hats.length() > 1):
+                    if(len(game_ready_hats) > 1):
                         # start game
                         # thread off
                         # should make a list of threads
@@ -277,6 +315,7 @@ Entryid.pack(side = RIGHT, anchor = CENTER)
 # Game ID frame
 Gameidl = Label(Gameidselectframe, text = "Game ID: ")
 Entrygameid = Entry(Gameidselectframe, bd = 5)
+Entrygameid.insert(0,"1")
 
 #pack them
 Gameidl.pack(side = LEFT)
