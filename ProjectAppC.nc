@@ -39,6 +39,10 @@ implementation {
     ProjectC.Leds -> LedsC;
     ProjectC.RgbLed -> RgbLedC;
 
+    //audio driver
+    components new TimerMilliC() as AudTrackTimer;
+    ProjectC.AudTrackTimer -> AudTrackTimer;
+
     // sensors
 
     // networking udpsockets for different functions in program

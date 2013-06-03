@@ -56,6 +56,13 @@ struct {
 	uint8_t ledEventCnt;
 } typedef ledTrack;
 
+struct {
+	uint16_t audFreqs[100];
+	uint64_t audTimes[100];
+	uint8_t audEventLen;
+	uint8_t audEventCnt;
+} typedef audTrack;
+
 
 uint8_t redsTest[] = {255, 0, 255, 0, 255};
 uint8_t greensTest[] = {0, 255, 255, 0, 0};
@@ -94,6 +101,9 @@ module ProjectC {
 		interface Leds;
 		interface RgbLed;
 
+		//audio
+		interface Timer<TMilli> as AudTrackTimer;
+
 		// ipv6lopan statistics
 		// interface BlipStatistics<ip_statistics_t> as IPStats;
 		// interface BlipStatistics<udp_statistics_t> as UDPStats;
@@ -110,6 +120,7 @@ module ProjectC {
 	struct sockaddr_in6 send_dest;
 
 	ledTrack currLedTrack;
+	audTrack currAudTrack;
 
 	uint16_t temp = 0;
 
@@ -173,8 +184,11 @@ module ProjectC {
 	// when you receive on port 1234 do the following
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
-		
+
 		pktHeader header; //TODO: migrate to use pointer, no advantage to copying data.
+		unsigned char* ptr;
+
+		ptr = &header;
 
 		// if the size is correct for the header radio struct
 		if (len >= sizeof(header)) {
@@ -185,7 +199,7 @@ module ProjectC {
 			// if the headers command is LED_TRACK
 			if (header.commandId == CMD_LED_TRACK) {
 
-				// initilise some varables
+				// initilise some variables
 				int ledId = 0; //which led we are looking at
 				int col = 0; //which colour (RGB)
 				int ev = 0; //event count
@@ -219,12 +233,53 @@ module ProjectC {
 					}
 				}
 
+
+				for (i=0; i < 50; i++)
+					printf("%02x", ptr[i]);
+
+				printf("\n\r");
+
+				printf("event Id: %lu\n\r", header.eventId);
+				printf("cmd Id: %lu\n\r", header.commandId);
+				printf("starttime: %llu\n\r", header.startTime);
+				printf("datalen: %llu\n\r", header.dataLength);
+
+				printf("\n\r");
+
+				printfflush();
+
 				
 				currLedTrack.ledEventLen = ev;
 				currLedTrack.ledEventCnt = 0; //ready to play the newest led track!
 
 				//TODO: replace oneshot time with starttime parsed in command. (needs globalTime implemented).
 				call LedTrackTimer.startOneShot(0); 
+			}
+
+			else if (header.commandId == CMD_AUDIO_TRACK) {
+
+				int i = 0; //byte count
+				int ev = 0; //event count
+
+				while (i < header.dataLength) {
+
+					if (ev%2 == 0) {
+						currAudTrack.audTimes[ev++] = *((uint64_t*)(payload + sizeof(header) + i));
+
+						i += 4;
+					}
+					else {
+
+						currAudTrack.audTimes[ev] = *((uint16_t*)(payload + sizeof(header) + i));
+						i++;
+					}
+				}
+
+				currAudTrack.audEventLen = ev;
+				currAudTrack.audEventCnt = 0; //ready to play the newest audio track!
+
+				//TODO: replace oneshot time with starttime parsed in command. (needs globalTime implemented).
+				call AudTrackTimer.startOneShot(0); 
 			}
 
 		}
@@ -293,6 +348,19 @@ module ProjectC {
 			//call RgbLed.setMultRgb(redsTest, greensTest, bluesTest, NUM_LEDS);
 
 			call LedTrackTimer.startOneShot(0);
+
+			//Example:
+			//1) Initialize pwm:
+			/*
+			PRR1 &=    ~(1 << 3);
+            OCR3A = 0X545;
+            TCCR3B |= (1<<3)|(1<<0);  
+			//2) Active pwm:
+			TCCR3A |=    (1 << 6);
+
+			//3) Desactive pwm:
+			TCCR3A &=    ~(1 << 6);
+			*/
 		}
 	}
 
@@ -327,14 +395,29 @@ module ProjectC {
 		}
 	}
 
+
+	event void AudTrackTimer.fired() {
+
+		//TODO: code to make beeps.
+
+		currAudTrack.audEventCnt++;
+
+		if (currAudTrack.audEventCnt < currAudTrack.audEventLen) {
+
+			//TODO: code is likely to have clock skew. better solution should be implemented once globaltime is implemented.
+			call AudTrackTimer.startOneShot(currAudTrack.audTimes[currAudTrack.audEventCnt] - 
+				currAudTrack.audTimes[currAudTrack.audEventCnt - 1]);
+		}
+	}
+
 	event void AdcTimer.fired() 
 	  {
 	    call AccelX.read();
 	    call AccelY.read();
 	    call AccelZ.read();
 
-	    printf("readVal: xyz: %u, %u, %u\n\r", lastX-450, lastY-450, lastZ-450);
-		printfflush();
+	    //printf("readVal: xyz: %u, %u, %u\n\r", lastX-450, lastY-450, lastZ-450);
+		//printfflush();
 
 		call AdcTimer.startOneShot(SAMPLING_PERIOD);
 	}
