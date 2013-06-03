@@ -75,7 +75,7 @@ class mote:
 
         # mote id
         mote_id = unpack("B",socket_data[0])
-        print "mote: " + (str)(mote_id)
+        print "mote: " + (str)(mote_id[0])
         self.id = mote_id
 
         # accelerometer data
@@ -163,8 +163,10 @@ def receive():
             mote_id = unpack("B",data[0])[0]
             print "\nReceived message from " + (str)(mote_id)
 
+            mote_structs[mote_id].delete_data()
             mote_structs[mote_id].decode(data)
             mote_structs[mote_id].calc_grad()
+            mote_structs[mote_id].draw()
 
             
                 
