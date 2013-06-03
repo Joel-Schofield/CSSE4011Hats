@@ -62,6 +62,7 @@ implementation
     return SUCCESS;
   }
 
+
   command void RgbLed.setColorRgb(uint8_t red, uint8_t green, uint8_t blue) {
 
     // Start by sending a byte with the format "1 1 /B7 /B6 /G7 /G6 /R7 /R6"
@@ -100,6 +101,43 @@ implementation
     sendByte(0x00);
     sendByte(0x00);
 
+  }
+
+  //function to update the colours on a chain of leds. 
+  command void RgbLed.setMultRgb(uint8_t* red, uint8_t* green, uint8_t* blue, uint8_t len) {
+
+    int i;
+
+    //TODO: check if this needs to be done for each of the leds, i.e. if 5 leds do this x 5
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00); 
+
+    for (i=0; i < len; i++) {
+
+      uint8_t prefix = 0b11000000;
+
+      if ((blue[i] & 0x80) == 0)     prefix |= 0b00100000;
+      if ((blue[i] & 0x40) == 0)     prefix |= 0b00010000; 
+      if ((green[i] & 0x80) == 0)    prefix |= 0b00001000;
+      if ((green[i] & 0x40) == 0)    prefix |= 0b00000100;
+      if ((red[i] & 0x80) == 0)      prefix |= 0b00000010;
+      if ((red[i] & 0x40) == 0)      prefix |= 0b00000001;
+
+      // chain resend
+      sendByte(prefix);
+
+      // send colours
+      sendByte(blue[i]);
+      sendByte(green[i]);
+      sendByte(red[i]);
+    }
+
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00);
+    sendByte(0x00); 
   }
 }
 
