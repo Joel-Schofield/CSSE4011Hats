@@ -50,11 +50,16 @@ struct {
 } typedef pktHeader;
 
 struct {
-	uint8_t ledColours[5][100];
-	uint64_t ledTimes[100];
+	uint8_t ledColours[100][5][3]; //first element is the event, 2nd is which led (1-NUM_LEDS), 3rd is each colour element (RGB).
+	uint64_t ledTimes[100]; //first event time should always be 0. track times do not involve global time, and are relative.
 	uint8_t ledEventLen;
 	uint8_t ledEventCnt;
 } typedef ledTrack;
+
+
+uint8_t redsTest[] = {255, 0, 255, 0, 255};
+uint8_t greensTest[] = {0, 255, 255, 0, 0};
+uint8_t bluesTest[] = {0, 0, 0, 255, 255};
 
 module ProjectC {
 	uses {
@@ -169,7 +174,7 @@ module ProjectC {
 	event void LedServer.recvfrom(struct sockaddr_in6 *src, void *payload, 
 									uint16_t len, struct ip6_metadata *meta) {   
 		
-		pktHeader header;
+		pktHeader header; //TODO: migrate to use pointer, no advantage to copying data.
 
 		// if the size is correct for the header radio struct
 		if (len >= sizeof(header)) {
@@ -181,27 +186,36 @@ module ProjectC {
 			if (header.commandId == CMD_LED_TRACK) {
 
 				// initilise some varables
-				int cnt = 0;
-				int ev = 0;
+				int ledId = 0; //which led we are looking at
+				int col = 0; //which colour (RGB)
+				int ev = 0; //event count
 				int i = 0;
+
 
 				// while i is less then the headers datalength
 				while (i < header.dataLength) {
 
 					// if count is equal to NUM_LEDS
-					if (cnt == NUM_LEDS) {
+					if (ledId == NUM_LEDS) {
 						// set the current led track
 						currLedTrack.ledTimes[ev] = *((uint64_t*)(payload + sizeof(header) + i));
-						cnt = 0;
+						ledId = 0;
 						ev++;
 						i += 4;
 					}
 					//  else 
 					else {
-						// increment count and i and shiz
-						currLedTrack.ledColours[cnt][ev] = *((uint8_t*)(payload + sizeof(header) + i));
+						// process the ledtrack.
+						currLedTrack.ledColours[ev][ledId][col] = *((uint8_t*)(payload + sizeof(header) + i));
+
+						if (col == 3) { //3 as one for each primary light colour.
+							col = 0;
+							ledId++;
+						}
+						else
+							col++;
+
 						i++;
-						cnt++;
 					}
 				}
 
@@ -244,22 +258,65 @@ module ProjectC {
 
 	// status update timer fired for sending on port 7001
 	event void StatusTimer.fired() {	
+
+		int i;
+
 		call Leds.led0Toggle();
+
 		if (!timerStarted) {
 			call StatusTimer.startPeriodic(5000);
 			timerStarted = TRUE;
-			call RgbLed.setColorRgb(0, 0, 0);
+
+			currLedTrack.ledTimes[0] = 0;
+			currLedTrack.ledTimes[1] = 1000;
+			currLedTrack.ledTimes[2] = 5000;
+
+			currLedTrack.ledEventLen = 3;
+
+			for (i=0; i < 5; i++) {
+				currLedTrack.ledColours[0][i][0] = 255;
+				currLedTrack.ledColours[0][i][1] = 0;
+				currLedTrack.ledColours[0][i][2] = 0;
+			}
+
+			for (i=0; i < 5; i++) {
+				currLedTrack.ledColours[1][i][0] = 0;
+				currLedTrack.ledColours[1][i][1] = 255;
+				currLedTrack.ledColours[1][i][2] = 0;
+			}
+			for (i=0; i < 5; i++) {
+				currLedTrack.ledColours[2][i][0] = 0;
+				currLedTrack.ledColours[2][i][1] = 0;
+				currLedTrack.ledColours[2][i][2] = 255;
+			}
+
+			//call RgbLed.setMultRgb(redsTest, greensTest, bluesTest, NUM_LEDS);
+
+			call LedTrackTimer.startOneShot(0);
 		}
 	}
 
 	event void LedTrackTimer.fired() 
 	  {
 
+	  	uint8_t reds[NUM_LEDS];
+		uint8_t greens[NUM_LEDS];
+		uint8_t blues[NUM_LEDS];
+
+		int i;
+
 	    printf("ledTrackFired!\n\r");
 		printfflush();
 
-		//TODO: code for updating the led colours.
-
+		for (i=0; i < NUM_LEDS; i++) {
+			reds[i] = currLedTrack.ledColours[currLedTrack.ledEventCnt][i][0];
+			greens[i] = currLedTrack.ledColours[currLedTrack.ledEventCnt][i][1];
+			blues[i] = currLedTrack.ledColours[currLedTrack.ledEventCnt][i][2];
+		}
+		
+		//update the leds.
+		call RgbLed.setMultRgb(reds, greens, blues, NUM_LEDS);
+		
 		currLedTrack.ledEventCnt++;
 
 		if (currLedTrack.ledEventCnt < currLedTrack.ledEventLen) {
