@@ -31,6 +31,7 @@ motenumber = 0
 
 # game varables
 mote_structs = []
+grad_cal_distance = 0
 
 # classes
 class mote:
@@ -104,22 +105,16 @@ class mote:
         for temp in range(0,90,10):
 
             # x components
-            if( ((self.datax[temp] - self.datax[temp+10])/(10)) > self.gradx ):
-                self.gradx = ((self.datax[temp] - self.datax[temp+10])/(10))
-            elif( ((self.datax[temp] - self.datax[temp+10])/(10)) < self.gradx ):
-                self.gradx = ((self.datax[temp] - self.datax[temp+10])/(10))
+            if( ((self.datax[temp] - self.datax[temp+grad_cal_distance])/(grad_cal_distance)) > self.gradx ):
+                self.gradx = ((self.datax[temp] - self.datax[temp+grad_cal_distance])/(grad_cal_distance))
                 
             # y components
-            if( ((self.datay[temp] - self.datay[temp+10])/(10)) > self.grady ):
-                self.grady = ((self.datay[temp] - self.datay[temp+10])/(10))
-            elif( ((self.datay[temp] - self.datay[temp+10])/(10)) < self.grady ):
-                self.grady = ((self.datay[temp] - self.datay[temp+10])/(10))   
+            if( ((self.datay[temp] - self.datay[temp+grad_cal_distance])/(grad_cal_distance)) > self.grady ):
+                self.grady = ((self.datay[temp] - self.datay[temp+grad_cal_distance])/(grad_cal_distance))  
 
             # z compoenents
-            if( ((self.dataz[temp] - self.dataz[temp+10])/(10)) > self.gradz ):
-                self.gradz = ((self.dataz[temp] - self.dataz[temp+10])/(10))
-            elif( ((self.dataz[temp] - self.dataz[temp+10])/(10)) < self.gradz ):
-                self.gradz = ((self.dataz[temp] - self.dataz[temp+10])/(10))   
+            if( ((self.dataz[temp] - self.dataz[temp+grad_cal_distance])/(grad_cal_distance)) > self.gradz ):
+                self.gradz = ((self.dataz[temp] - self.dataz[temp+grad_cal_distance])/(grad_cal_distance))   
 
         # print the highest changes in gradiant
         
@@ -173,6 +168,7 @@ def receive():
 # mainloop
 
 # initilise the structues
+grad_cal_distance = 5
 motenumber = 0
 for temp in range(0,32):
     mote_structs.append(mote())
