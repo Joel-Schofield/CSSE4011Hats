@@ -123,9 +123,9 @@ class mote:
 
         # print the highest changes in gradiant
         
-        print "Grad x: " + self.gradx
-        print "Grad y: " + self.grady
-        print "Grad z: " + self.gradz
+        print "Grad x: " + (str)(self.gradx)
+        print "Grad y: " + (str)(self.grady) 
+        print "Grad z: " + (str)(self.gradz)
 
 
 #add callbacks here
