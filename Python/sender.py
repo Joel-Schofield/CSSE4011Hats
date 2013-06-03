@@ -172,7 +172,7 @@ def receive():
             mote_structs[mote_id].calc_grad()
             mote_structs[mote_id].draw()
 
-            if((int)(Entrygameid.get()) == 1):
+            if(int(Entrygameid.get()) == 1):
                 if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
                     # add it to list of game ready hats
                     # this list when there is more then 1 hat will begin a game
@@ -187,7 +187,7 @@ def receive():
                         print "hat moved to ready list"
                         game_ready_hats.append(mote_structs[mote_id])
 
-                    if(game_ready_hats.length() > 1):
+                    if(len(game_ready_hats) > 1):
                         # start game
                         # thread off
                         # should make a list of threads
@@ -276,7 +276,8 @@ Entryid.pack(side = RIGHT, anchor = CENTER)
 
 # Game ID frame
 Gameidl = Label(Gameidselectframe, text = "Game ID: ")
-Entrygameid = Entry(Gameidselectframe, bd = 5, text = "1")
+Entrygameid = Entry(Gameidselectframe, bd = 5)
+Entrygameid.insert(0,"1")
 
 #pack them
 Gameidl.pack(side = LEFT)
