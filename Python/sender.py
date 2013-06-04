@@ -327,14 +327,14 @@ def listBox_processor(mote_id):
         push = mote_structs[mote_id].make_listBox_string()
         count = 0
         for temp in listbox_list:
-            print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6])
-            if(mote_id > temp[0][6]):
+            print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6:7])
+            if(mote_id > (int)(temp[0][6:7])):
                 listBox.insert(count+1, push)
-            elif(mote_id < temp[0][6]):
+            elif(mote_id < (int)(temp[0][6:7])):
                 if(count == 0):
                     listBox.insert(0,push)
                 else:
-                    listBox.insert(count+1, push)
+                    listBox.insert(count-1, push)
 
         if (len(listbox_list) == 0):
             listBox.insert(0,push)
@@ -367,65 +367,6 @@ def receive():
             mote_structs[mote_id].draw()
 
             listBox_processor(mote_id)
-
-            """
-            # edit the listbox here
-            # hunt through list
-            current_list = []
-            temp_list = []
-            listbox_list = []
-            add = 1 
-
-            current_list = listBox.get(0,END)
-
-            for x in current_list:
-                for y in x.split(' '):
-                    if(y == ''):
-                        # del it
-                        y = ''
-                    else:
-                        temp_list.append(y[:])
-                listbox_list.append(temp_list[:])
-                del temp_list[:]
-
-            count = 0
-            for temp in listbox_list:
-                print temp
-                print temp[0]
-                if(temp[0] == ("FEC0::" + (str)(mote_id))):
-                    # already added update it
-                    listBox.delete(count)
-                    push = mote_structs[mote_id].make_listBox_string()
-                    listBox.insert(count,push[:])
-                    add = 0
-                    break
-                else:
-                    add = 1
-                count += 1
-
-            if(add == 1):
-                # if its new
-                # find the spot to put it
-                push = mote_structs[mote_id].make_listBox_string()
-                count = 0
-                for temp in listbox_list:
-                    print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6])
-                    if(mote_id > temp[0][6]):
-                        listBox.insert(count+1, push)
-                    elif(mote_id < temp[0][6]):
-                        if(count == 0):
-                            listBox.insert(0,push)
-                        else:
-                            listBox.insert(count-1, push)
-
-                if (len(listbox_list) == 0):
-                    listBox.insert(0,push)
-                
-            else:                
-                add = 0
-            del listbox_list[:]
-
-            """
 
             if(int(Entrygameid.get()) == 1):
                 if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
@@ -461,10 +402,11 @@ def activity_check():
         for temp in range(0,32):
             check_list[temp] = mote_structs[temp].time
 
-        time.sleep(20)
+        time.sleep(13)
 
         for temp in range(0,32):
-            if(mote_structs[temp].time == check_list[temp]):
+            if ((mote_structs[temp].time == check_list[temp])
+            and (mote_structs[temp].time != 0)):
                 mote_structs[temp].state = "Not Active"
                 mote_structs[temp].game_status = "Reconnect!"
                 listBox_processor(temp)
