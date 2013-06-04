@@ -48,6 +48,7 @@ class mote:
     """ initiliastion """
     def __init__(self):
         self.id = motenumber
+        self.time = 0
         self.game = 0
         self.score = 0
         self.partners = []
@@ -57,6 +58,9 @@ class mote:
         self.gradx = 0
         self.grady = 0
         self.gradz = 0
+        self.listBox_string = ""
+        self.state = "Active"
+        self.game_status = "Waiting"
 
     """ change the score """
     def increment_score(self, x):
@@ -91,6 +95,20 @@ class mote:
         mote_id = unpack("B",socket_data[0])
         print "mote: " + (str)(mote_id[0])
         self.id = mote_id
+
+        # mote time
+        """
+        time = unpack("Q",socket_data[1:5])
+        print "time: " + (str)(mote_id[0])
+        self.time = time
+        """
+
+        self.state = "Active"
+
+        if(self.game_status == "Reconnect!"):
+            self.game_status = "Waiting"
+
+        self.time += 1
 
         # accelerometer data
         for temp in range(1,201,2):
@@ -134,6 +152,19 @@ class mote:
         print "Grad x: " + (str)(self.gradx)
         print "Grad y: " + (str)(self.grady) 
         print "Grad z: " + (str)(self.gradz)
+
+    def make_listBox_string(self):
+        DATA_FORMAT = "{0:<14}{1:<14}{2:<10}{3:<10}"
+
+        self.listBox_string = DATA_FORMAT.format("FEC0::" + (str)(self.id[0]),
+            self.state, "Score:" + (str)(self.score), self.game_status)
+
+        self.score += 1
+
+        print "from make_listBox_string" + self.listBox_string
+
+        return self.listBox_string
+
 
 """ a class to hold all the running game threads """
 class game_thread:
@@ -257,6 +288,61 @@ def make_audio_track(starting_global_time,number_of_events):
     del audiotrack
     return send_data
 
+def listBox_processor(mote_id):
+    # edit the listbox here
+    # hunt through list
+    current_list = []
+    temp_list = []
+    listbox_list = []
+    add = 1 
+
+    current_list = listBox.get(0,END)
+
+    for x in current_list:
+        for y in x.split(' '):
+            if(y == ''):
+                # del it
+                y = ''
+            else:
+                temp_list.append(y[:])
+        listbox_list.append(temp_list[:])
+        del temp_list[:]
+
+    count = 0
+    for temp in listbox_list:
+        if(temp[0] == ("FEC0::" + (str)(mote_id))):
+            # already added update it
+            listBox.delete(count)
+            push = mote_structs[mote_id].make_listBox_string()
+            listBox.insert(count,push[:])
+            add = 0
+            break
+        else:
+            add = 1
+        count += 1
+
+    if (add == 1):
+        # if its new
+        # find the spot to put it
+        push = mote_structs[mote_id].make_listBox_string()
+        count = 0
+        for temp in listbox_list:
+            print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6])
+            if(mote_id > temp[0][6]):
+                listBox.insert(count+1, push)
+            elif(mote_id < temp[0][6]):
+                if(count == 0):
+                    listBox.insert(0,push)
+                else:
+                    listBox.insert(count+1, push)
+
+        if (len(listbox_list) == 0):
+            listBox.insert(0,push)
+        
+    else:                
+        add = 0
+    del listbox_list[:]
+
 # receive function for getting data from the zig mote
 """ receive data from the motes """
 def receive():
@@ -274,10 +360,72 @@ def receive():
             mote_id = unpack("B",data[0])[0]
             print "\nReceived message from " + (str)(mote_id)
 
+            # process all the data here
             mote_structs[mote_id].delete_data()
             mote_structs[mote_id].decode(data)
             mote_structs[mote_id].calc_grad()
             mote_structs[mote_id].draw()
+
+            listBox_processor(mote_id)
+
+            """
+            # edit the listbox here
+            # hunt through list
+            current_list = []
+            temp_list = []
+            listbox_list = []
+            add = 1 
+
+            current_list = listBox.get(0,END)
+
+            for x in current_list:
+                for y in x.split(' '):
+                    if(y == ''):
+                        # del it
+                        y = ''
+                    else:
+                        temp_list.append(y[:])
+                listbox_list.append(temp_list[:])
+                del temp_list[:]
+
+            count = 0
+            for temp in listbox_list:
+                print temp
+                print temp[0]
+                if(temp[0] == ("FEC0::" + (str)(mote_id))):
+                    # already added update it
+                    listBox.delete(count)
+                    push = mote_structs[mote_id].make_listBox_string()
+                    listBox.insert(count,push[:])
+                    add = 0
+                    break
+                else:
+                    add = 1
+                count += 1
+
+            if(add == 1):
+                # if its new
+                # find the spot to put it
+                push = mote_structs[mote_id].make_listBox_string()
+                count = 0
+                for temp in listbox_list:
+                    print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6])
+                    if(mote_id > temp[0][6]):
+                        listBox.insert(count+1, push)
+                    elif(mote_id < temp[0][6]):
+                        if(count == 0):
+                            listBox.insert(0,push)
+                        else:
+                            listBox.insert(count-1, push)
+
+                if (len(listbox_list) == 0):
+                    listBox.insert(0,push)
+                
+            else:                
+                add = 0
+            del listbox_list[:]
+
+            """
 
             if(int(Entrygameid.get()) == 1):
                 if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
@@ -303,6 +451,23 @@ def receive():
                         # start the thread
                         game_thread_1 = Thread(target = game_1)
                         game_thread_1.start()
+
+def activity_check():
+    check_list = []
+    for temp in range(0,32):
+        check_list.append(temp)
+
+    while True:
+        for temp in range(0,32):
+            check_list[temp] = mote_structs[temp].time
+
+        time.sleep(20)
+
+        for temp in range(0,32):
+            if(mote_structs[temp].time == check_list[temp]):
+                mote_structs[temp].state = "Not Active"
+                mote_structs[temp].game_status = "Reconnect!"
+                listBox_processor(temp)
                     
 """ the first game designed """
 def game_1():
@@ -326,27 +491,21 @@ for temp in range(0,32):
 top = Tk()
 top.wm_title("CSSE4011 Super Awsome iGame iHats")
 
-f = Figure(figsize=(6,3), dpi=100)
+f = Figure(figsize=(3,2), dpi=100)
 a = f.add_subplot(111)
 t = arange(0.0,3.0,0.01)
 s = sin(2*pi*t)
 
 a.plot([1,2,3,4,5,6,7,8,9,10,0,4,2,8,20])
 
-Scaleframered = Frame(top)
-Scaleframered.pack(side = TOP, fill = X)
-
-Scaleframegreen = Frame(top)
-Scaleframegreen.pack(side = TOP, fill = X)
-
-Scaleframeblue = Frame(top)
-Scaleframeblue.pack(side = TOP, fill = X)
-
 Moteselectframe = Frame(top)
 Moteselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 
 Gameidselectframe = Frame(top)
 Gameidselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
+
+Scoreframe = Frame(top)
+Scoreframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 
 Graphframe = Frame(top)
 Graphframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
@@ -356,24 +515,7 @@ Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
 
 # a tk.DrawingArea
 canvas = FigureCanvasTkAgg(f, master = Graphframe)
-
-toolbar = NavigationToolbar2TkAgg( canvas, Graphframe)
-
-# Slider Frame
-Scalered = Scale(Scaleframered, from_= 0, to = 255, orient = HORIZONTAL, )
-redlable = Label(Scaleframered, text = "Red")
-Scalegreen = Scale(Scaleframegreen, from_ = 0, to = 255, orient = HORIZONTAL)
-greenlable = Label(Scaleframegreen, text = "Green")
-Scaleblue = Scale(Scaleframeblue, from_ = 0, to = 255, orient = HORIZONTAL)
-bluelable = Label(Scaleframeblue, text = "Blue")
-
-# pack them
-redlable.pack(side = LEFT, anchor = W, padx = 10)
-Scalered.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
-greenlable.pack(side = LEFT, anchor = W, padx = 5)
-Scalegreen.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
-bluelable.pack(side = LEFT, anchor = W, padx = 9)
-Scaleblue.pack(side = LEFT, anchor = E, fill = X, padx = 10, expand = True)
+#toolbar = NavigationToolbar2TkAgg( canvas, Graphframe)
 
 # Mote ID frame
 Sendl = Label(Moteselectframe, text = "TOS__ID: ")
@@ -393,10 +535,17 @@ Entrygameid.insert(0,"1")
 Gameidl.pack(side = LEFT)
 Entrygameid.pack(side = RIGHT)
 
+
+# score frame
+DATA_FORMAT = "{0:<14}{1:<12}{2:<16}{3:<10}"
+listBox = Listbox(Scoreframe, selectmode=SINGLE, width = 50,
+                       height = 10, font="Courier 10")
+listBox.pack(side=LEFT,expand = True,fill = BOTH)
+
 canvas.show()
 canvas.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-toolbar.update()
+#toolbar.update()
 canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand = True)
 
 # Button
@@ -406,6 +555,9 @@ B.pack(side = TOP, pady = 10)
 # start thread
 t = Thread(target=receive)
 t.start()
+
+q = Thread(target=activity_check)
+q.start()
 
 # do the main loop now
 top.mainloop()
