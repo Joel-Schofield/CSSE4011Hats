@@ -89,11 +89,10 @@ class mote:
 
     """ decode the string received over the udp socket """
     def decode(self,socket_data):
-        print "decoding"
 
         # mote id
         mote_id = unpack("B",socket_data[0])
-        print "mote: " + (str)(mote_id[0])
+        print "### mote: " + (str)(mote_id[0]) + " ###"
         self.id = mote_id
 
         # mote time
@@ -113,15 +112,15 @@ class mote:
         # accelerometer data
         for temp in range(1,201,2):
             self.datax.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
-        print self.datax
+        #print self.datax
 
         for temp in range(201,401,2):
             self.datay.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
-        print self.datay
+        #print self.datay
 
         for temp in range(401,601,2):
             self.dataz.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
-        print self.dataz
+        #print self.dataz
         
     """ draw the data on the graph this is mainly for debugging """
     def draw(self):
@@ -149,19 +148,17 @@ class mote:
 
         # print the highest changes in gradiant
         
-        print "Grad x: " + (str)(self.gradx)
-        print "Grad y: " + (str)(self.grady) 
-        print "Grad z: " + (str)(self.gradz)
+        #print "Grad x: " + (str)(self.gradx)
+        #print "Grad y: " + (str)(self.grady) 
+        #print "Grad z: " + (str)(self.gradz)
 
     def make_listBox_string(self):
-        DATA_FORMAT = "{0:<14}{1:<14}{2:<10}{3:<10}"
+        DATA_FORMAT = "{0:<9}{1:<12}{2:<14}{3:<10}"
 
         self.listBox_string = DATA_FORMAT.format("FEC0::" + (str)(self.id[0]),
             self.state, "Score:" + (str)(self.score), self.game_status)
 
         self.score += 1
-
-        print "from make_listBox_string" + self.listBox_string
 
         return self.listBox_string
 
@@ -327,14 +324,17 @@ def listBox_processor(mote_id):
         push = mote_structs[mote_id].make_listBox_string()
         count = 0
         for temp in listbox_list:
-            print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6:7])
+            # print "checking: " + (str)(mote_id) + " against: " + (str)(temp[0][6:7])
             if(mote_id > (int)(temp[0][6:7])):
                 listBox.insert(count+1, push)
+                break
             elif(mote_id < (int)(temp[0][6:7])):
                 if(count == 0):
                     listBox.insert(0,push)
+                    break
                 else:
                     listBox.insert(count-1, push)
+                    break
 
         if (len(listbox_list) == 0):
             listBox.insert(0,push)
@@ -358,7 +358,7 @@ def receive():
             break
         else:
             mote_id = unpack("B",data[0])[0]
-            print "\nReceived message from " + (str)(mote_id)
+            # print "\nReceived message from " + (str)(mote_id)
 
             # process all the data here
             mote_structs[mote_id].delete_data()
@@ -376,11 +376,11 @@ def receive():
                     try:
                         # this will give i a value if it is in the list already
                         i = game_ready_hats.index(mote_structs[mote_id])
-                        print "hat already ready to start game"
+                        print "hat " + (str)(mote_id) + " already ready to start game"
                     except ValueError:
                         # not in list
                         i = -1 
-                        print "hat moved to ready list"
+                        print "hat " + (str)(mote_id) + " moved to ready list"
                         game_ready_hats.append(mote_structs[mote_id])
 
                     if(len(game_ready_hats) > 1):
