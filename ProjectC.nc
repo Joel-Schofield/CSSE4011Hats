@@ -13,7 +13,8 @@
 
 #define CMD_LED_TRACK 1
 #define CMD_AUDIO_TRACK 2
-#define CMD_GET_ADC 3
+#define CMD_START_STREAM_ACCEL 3
+#define CMD_STOP_STREAM_ACCEL 4
 
 #define NUM_LEDS 5
 
@@ -45,11 +46,10 @@ struct radio_msg_send {
 } ;
 
 struct {
-	uint32_t eventId; //ID of the event. Used as a unique identifier.
+	uint32_t eventId; //Used to uniquely identify the event.
 	uint32_t commandId; //ID of the command
-	uint64_t startTime; //time at which the event will start (global synced time)
+	uint64_t startTime; //time at which the cmd will start.
 	uint64_t dataLength; //data length in bytes
-	void* data;
 } typedef pktHeader;
 
 struct {
@@ -130,6 +130,8 @@ module ProjectC {
 
 	uint16_t temp = 0;
 
+	int syncedAtLeastOnce = 0;
+
 	// timer variables
 	uint32_t refLocalTime = 0;
   	uint32_t refGlobalTime = 0;
@@ -173,8 +175,8 @@ module ProjectC {
 		call LedServer.bind(1234);
 		call Status.bind(7001);
 
-		//start reading from the ADC.
-		call AdcTimer.startOneShot(SAMPLING_PERIOD);
+		//start reading from the ADC. <EDIT> no longer starts here, starts once global time is synced.
+		//call AdcTimer.startOneShot(SAMPLING_PERIOD);
 		printf("Booted: %i\n", TOS_NODE_ID);
 		printfflush();
 	}
@@ -377,7 +379,6 @@ module ProjectC {
 
 
 			//dummy audtrack.
-
 			currAudTrack.audFreqs[0] = 0X1A45;
 			currAudTrack.audFreqs[1] = 0X2045;
 			currAudTrack.audFreqs[2] = 0X2A45;
@@ -401,14 +402,21 @@ module ProjectC {
 		}
 
 		if (call GlobalTime.getGlobalTime(&refGlobalTime) == SUCCESS) {
-			call AudTrackTimer.startOneShot(0);
+
 			printf("time is synced %lu!\n\r", refGlobalTime);
+
+			if (!syncedAtLeastOnce) }
+				call AdcTimer.startOneShot(5000 - (refGlobalTime % 5000) + TOS_NODE_ID*50 ); //improves times on when the adc transmits.
+				
+				call AudTrackTimer.startOneShot(0);
+
+				syncedAtLeastOnce = 1;
+			}
 		}
 		else {
 			printf("time is not synced :(\n\r");
-				currLedTrack.ledEventCnt = 0; //reset and play again
-			call LedTrackTimer.startOneShot(0); //play the "not synced" track.
-
+			currLedTrack.ledEventCnt = 0; //reset and play again
+			call LedTrackTimer.startOneShot(0); //play the default "not synced" track.
 		}
 	}
 
