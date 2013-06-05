@@ -15,6 +15,9 @@ import time
 import random
 import copy
 
+global global_time
+global_time = 0
+
 # gui varables
 redval = 0
 greenval = 0
@@ -44,6 +47,12 @@ game_ready_hats = []
 game_threads = []
 thread_number = 0
 
+def globaltimekeeper():
+    global global_time
+    while True:
+        time.sleep(1)
+        global_time += 1000
+
 # classes
 class mote:
     """ initiliastion """
@@ -60,8 +69,9 @@ class mote:
         self.grady = []
         self.gradz = []
         self.listBox_string = ""
-        self.state = "Active"
+        self.state = ""
         self.game_status = "Waiting"
+        self.in_game = 0
 
     """ change the score """
     def increment_score(self, x):
@@ -91,6 +101,8 @@ class mote:
     """ decode the string received over the udp socket """
     def decode(self,socket_data):
 
+        global global_time
+
         # mote id
         mote_id = unpack("B",socket_data[0])
         print "### mote: " + (str)(mote_id[0]) + " ###"
@@ -98,10 +110,18 @@ class mote:
 
         # mote time
         time = unpack("I",socket_data[1:5])
-        print "time: " + (str)(time[0])
-        self.time = time[0]
+        if(self.in_game != 1):
+            self.time = time[0]
+        print "time: " + (str)(self.time)
 
-        self.state = "Active"
+        if(self.time == 0):
+            self.state = "Syncing"
+        else:
+            self.state = "Active"
+            if (global_time == 0):
+                global_time = self.time
+                t = Thread(target = globaltimekeeper)
+                t.start() 
 
         if(self.game_status == "Reconnect!"):
             self.game_status = "Waiting"
@@ -117,7 +137,7 @@ class mote:
             self.datay.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
         #print self.datay
 
-        for temp in range(405,599,2):
+        for temp in range(405,605,2):
             self.dataz.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
         #print self.dataz
         
@@ -135,7 +155,7 @@ class mote:
         grad_tuple = ()
         timestamp_grad = 0
         timestamp_grad = self.time
-        for temp in range(0,95,grad_cal_distance):
+        for temp in range(0,(len(self.datax)-5),grad_cal_distance):
             
             # x components
             value = ((self.datax[temp] - self.datax[temp+grad_cal_distance])/(grad_cal_distance))
@@ -159,7 +179,7 @@ class mote:
                 self.gradz.append(copy.copy(grad_tuple))
 
             # increment timestamp
-            timestamp_grad = (timestamp_grad + (5*250))
+            timestamp_grad = (timestamp_grad + (250))
 
     def make_listBox_string(self):
         DATA_FORMAT = "{0:<9}{1:<12}{2:<14}{3:<10}"
@@ -252,7 +272,7 @@ def make_led_track(starting_global_time,number_of_events):
     datalength = 19*events
 
     # put header in here
-    send_data = pack("IIQQ",4294967295,1,0,datalength)
+    send_data = pack("IIQQ",4294967295,1,global_time,datalength)
 
     # make a random led track
     # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
@@ -260,7 +280,13 @@ def make_led_track(starting_global_time,number_of_events):
         timestamp_led_combo.append(global_time)
         global_time += random.randint(1,1000)
         for temp in range (0,16):
-            timestamp_led_combo.append(random.randint(0,255))
+            random_colour = 0
+            random_colour = random.randint(0,255)
+            if(random_colour < 127):
+                random_colour = 0
+            else:
+                random_colour = 255
+            timestamp_led_combo.append(random_colour)
         ledtrack.append(timestamp_led_combo[:])
         
         # delete the combo
@@ -375,7 +401,7 @@ def listBox_processor(mote_id):
         add = 0
     del listbox_list[:]
 
-def check_same_time_bow():
+def check_same_time_bow(hats_array):
     # take the received data chunks and detect grads in same location
     # this may prove difficult.
     
@@ -383,6 +409,23 @@ def check_same_time_bow():
     grad_tuple = ()
     value = 0
     timestamp_grad = 0
+
+    print "game_ready_hats: " + (str)(hats_array[0])
+
+    # compare game_ready_hats[0] with game_ready_hats[1]
+    if( (len(hats_array[0].gradx) != 0) and (len(hats_array[1].gradx) != 0) ):
+        for temp in hats_array[0].gradx:
+            for temp2 in hats_array[1].gradx:
+                # if temp2 timestamp + 500 > temp timestamp and temp2 timestamp - 500 < temp timestamp then match 
+                print "comparing " + (str)(temp[0]) + " between: " + (str)(temp2[0] + 500) + " and: " + (str)(temp2[0] - 500)
+                if ( ((temp2[0] + 500) > temp[0]) and ((temp2[0] - 500)  < temp[0])):
+                    # match
+                    print "match"
+                    return 1
+    else:
+        return 0
+
+
 """
     # itterate over the ready list, make a tuple of the time stamp and the grad, blocks of 5
     for blaa in game_ready_hats:
@@ -402,6 +445,8 @@ def receive():
     UDPSockReceive.bind(("",4321))
     datapos = 0
 
+    game_ready_hats = []
+
     while True:
         data,addr = UDPSockReceive.recvfrom(1024)
         if not data:
@@ -412,7 +457,8 @@ def receive():
             # print "\nReceived message from " + (str)(mote_id)
 
             # process all the data here
-            mote_structs[mote_id].delete_data()
+            if (mote_structs[mote_id].in_game != 1):
+                mote_structs[mote_id].delete_data()
             mote_structs[mote_id].decode(data)
             mote_structs[mote_id].calc_grad()
             mote_structs[mote_id].draw()
@@ -425,7 +471,10 @@ def receive():
                     # rewrite this section........
                     # check for concurrent bows here
 
-                    if ((mote_structs[mote_id].gradx >= hat_dip_level) or (mote_structs[mote_id].grady >= hat_dip_level)):
+                    # if there is some grad changed
+                    print "length of grad tuple " + (str)(len(mote_structs[mote_id].gradx))
+                    if ( (((len(mote_structs[mote_id].gradx)) > 0) or ((len(mote_structs[mote_id].grady) > 0))) 
+                        and mote_structs[mote_id].in_game != 1):
                         # add it to list of game ready hats
                         # this list when there is more then 1 hat will begin a game
                         # check that it hasn't already been added to this array first
@@ -442,17 +491,17 @@ def receive():
                             game_ready_hats.append(mote_structs[mote_id])
                             listBox_processor(mote_id)
 
-                    # up to here..........
-
-
                         if(len(game_ready_hats) > 1):
-                            if (check_same_time_bow() == 1):
+                            print "before chekcing_bow_time " + (str)(game_ready_hats[0])
+                            if (check_same_time_bow(game_ready_hats) == 1):
                                 # start game
                                 # thread off
                                 # should make a list of threads
                                 for temp in game_ready_hats:
                                     temp.game_status = "In Game:" + (str)(game_man.number_of_threads)
                                     listBox_processor(temp.id[0])
+                                    mote_structs[temp.id[0]].in_game = 1
+
 
                                 t = game_thread(Thread(target = game_1 , args=(game_man.number_of_threads,)) , game_man.number_of_threads )
                                 game_man.number_of_threads += 1
@@ -463,12 +512,23 @@ def receive():
 
                                 # delete game ready hats
                                 del game_ready_hats[:]
-
-                                # start the game thread
-                                t.thread_id.start()
+                                game_ready_hats = []
 
                                 # append the game thread to the manager
                                 game_man.all_game_threads.append(copy.copy(t))
+
+                                game_man.all_game_threads[game_man.number_of_threads - 1].thread_id.start()
+
+                                # start the game thread
+                                # t.thread_id.start()
+                            else:
+                                # if not delete the game_ready_hats, revert status
+                                for temp in game_ready_hats:
+                                    mote_structs[temp.id[0]].game_status = "Waiting"
+                                    listBox_processor(temp.id[0])
+                                del game_ready_hats
+                                game_ready_hats = []
+
 
 def activity_check():
     check_list = []
@@ -491,6 +551,25 @@ def activity_check():
 """ the first game designed """
 def game_1(place_in_game_man):
     # run till someone losses
+    global global_time
+    
+    random_led_track = make_led_track(global_time,20)
+    random_audio_track = make_audio_track(global_time,20)
+    
+    print "the average globaltime is: " + (str)(get_average_global_time())
+
+    for blaa in game_man.all_game_threads[place_in_game_man].game_motes:
+        address = "fec0::" + (str)(blaa.id[0])
+        
+        UDPSock = socket(AF_INET6,SOCK_DGRAM)
+        UDPSock.connect((address,1234))
+        UDPSock.send(random_led_track)
+        send_data = make_audio_track(10,20)
+        UDPSock = socket(AF_INET6,SOCK_DGRAM)
+        UDPSock.connect((address,1234))
+        UDPSock.send(random_audio_track)
+        time.sleep(0.05)
+
     for blaa in range(0,4):
         print "running game 1 wohoooo in thread" + (str)(place_in_game_man)
         time.sleep((random.randint(0,100))/10)
@@ -506,6 +585,8 @@ def game_1(place_in_game_man):
     # process score
     for blaa in game_man.all_game_threads[place_in_game_man].game_motes:
         mote_structs[blaa.id[0]].score += blaa.id[0]
+        mote_structs[blaa.id[0]].in_game = 0
+        mote_structs[blaa.id[0]].delete_data()
         listBox_processor(blaa.id[0])
                      
 # mainloop
