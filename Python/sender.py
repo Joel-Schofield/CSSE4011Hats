@@ -16,7 +16,12 @@ import random
 import copy
 
 global global_time
+global global_led_track
+global global_audio_track
+
 global_time = 0
+global_audio_track = []
+global_led_track = []
 
 # gui varables
 redval = 0
@@ -112,7 +117,7 @@ class mote:
         time = unpack("I",socket_data[1:5])
         if(self.in_game != 1):
             self.time = time[0]
-        print "time: " + (str)(self.time)
+        #print "time: " + (str)(self.time)
 
         if(self.time == 0):
             self.state = "Syncing"
@@ -207,6 +212,8 @@ class game_thread:
         self.thread_id = game_thread
         self.Thread_number = thread_number
         self.game_motes = []
+        self.ledtrack = []
+        self.audiotrack = []
 
     def set_game_id(self,game_id):
         self.game_id = game_id
@@ -266,19 +273,51 @@ def send():
 """ starting_global_time is only for testing number_of_events is important """
 def make_led_track(starting_global_time,number_of_events):
     global_time = starting_global_time
+    tracktime = 0
     timestamp_led_combo = []
     copy_list = []
     events = number_of_events
     datalength = 19*events
+
+    global global_led_track
 
     # put header in here
     send_data = pack("IIQQ",4294967295,1,global_time,datalength)
 
     # make a random led track
     # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
+    tracktime += 100
+
+    custom_start = []
+
+    # add predefined header
+    custom_start.append(tracktime)
+
+    for temp2 in range (0,15):
+        custom_start.append(0)
+
+    for temp2 in range (1,16,3):
+        custom_start[temp2] = 255
+
+    custom_start.append(tracktime+100)
+
+    for temp2 in range (0,15):
+        custom_start.append(0)
+
+    for temp2 in range (17,32,3):
+        custom_start[temp2] = 0
+
+    custom_start.append(tracktime+200)
+
+    for temp2 in range (0,15):
+        custom_start.append(0)
+
+    for temp2 in range (33,48,3):
+        custom_start[temp2] = 255
+
     for temp2 in range (0,(datalength/19)):
-        timestamp_led_combo.append(global_time)
-        global_time += random.randint(1,1000)
+        timestamp_led_combo.append(tracktime)
+        tracktime += (400 + random.randint(1,1000))
         for temp in range (0,16):
             random_colour = 0
             random_colour = random.randint(0,255)
@@ -304,11 +343,14 @@ def make_led_track(starting_global_time,number_of_events):
     print "LED TRACK"
     print ':'.join(x.encode('hex') for x in hexprintout)
 
+    global_led_track = copy.copy(ledtrack)
+
     del ledtrack[:]
     return send_data
 
 def make_audio_track(starting_global_time,number_of_events):
     global_time = starting_global_time
+    tracktime = 0
     timestamp_audio_combo = []
     copy_list = []
     audiotrack = []
@@ -316,16 +358,35 @@ def make_audio_track(starting_global_time,number_of_events):
     # 4 + 2 = 6
     datalength = 6*events
 
-    send_data = pack("IIQQ",4294967295,2,0,datalength)
+    global global_audio_track
 
+    send_data = pack("IIQQ",4294967295,2,global_time,datalength)
+
+    on_off_switch = 0
+    on_off_switch2 = 0
     # format [timestamp] [frequency]
+    tracktime += 100
     for temp2 in range (0,(datalength/6)):
-        timestamp_audio_combo.append(global_time)
-        global_time += random.randint(1,1000)
+        # randomly generate a length
+        if(on_off_switch2 == 1):
+            tracktime += (1000  + random.randint(1,1000))
+            timestamp_audio_combo.append(tracktime)
+            on_off_switch2 = 0
+        # play for 100
+        else:
+            tracktime += 300
+            timestamp_audio_combo.append(tracktime)
+            on_off_switch2 = 1
+
         if(temp2 == (number_of_events - 1)):
             timestamp_audio_combo.append(0)
         else:
-            timestamp_audio_combo.append(random.randint(0,20000))
+            if(on_off_switch == 1):
+                timestamp_audio_combo.append(20000)
+                on_off_switch = 0
+            else:
+                timestamp_audio_combo.append(0)
+                on_off_switch = 1
         audiotrack.append(timestamp_audio_combo[:])
 
         # delete the combo
@@ -340,6 +401,8 @@ def make_audio_track(starting_global_time,number_of_events):
 
     print "AUDIO TRACK"
     print ':'.join(x.encode('hex') for x in hexprintout)
+
+    global_audio_track = copy.copy(audiotrack)
 
     del audiotrack
     return send_data
@@ -420,22 +483,21 @@ def check_same_time_bow(hats_array):
                 print "comparing " + (str)(temp[0]) + " between: " + (str)(temp2[0] + 500) + " and: " + (str)(temp2[0] - 500)
                 if ( ((temp2[0] + 500) > temp[0]) and ((temp2[0] - 500)  < temp[0])):
                     # match
-                    print "match"
+                    print "Match X"
                     return 1
+    elif( (len(hats_array[0].grady) != 0) and (len(hats_array[1].grady) != 0) ):
+        for temp in hats_array[0].grady:
+            for temp2 in hats_array[1].grady:
+                # if temp2 timestamp + 500 > temp timestamp and temp2 timestamp - 500 < temp timestamp then match 
+                print "comparing " + (str)(temp[0]) + " between: " + (str)(temp2[0] + 500) + " and: " + (str)(temp2[0] - 500)
+                if ( ((temp2[0] + 500) > temp[0]) and ((temp2[0] - 500)  < temp[0])):
+                    # match
+                    print "Match Y"
+                    return 1
+
     else:
+        print "No Match"
         return 0
-
-
-"""
-    # itterate over the ready list, make a tuple of the time stamp and the grad, blocks of 5
-    for blaa in game_ready_hats:
-        timestamp_grad = blaa.time
-        for temp in range(0,95,grad_cal_distance):
-            value = (mote_structs[blaa.id[0]].datax[temp] - mote_structs[temp.id[0]].datax[temp+grad_cal_distance]) / (grad_cal_distance)
-            if(value > hat_dip_level):
-                grad_tuple = (timestamp_grad + (250*temp)
-"""
-
 
 # receive function for getting data from the zig mote
 """ receive data from the motes """
@@ -472,7 +534,6 @@ def receive():
                     # check for concurrent bows here
 
                     # if there is some grad changed
-                    print "length of grad tuple " + (str)(len(mote_structs[mote_id].gradx))
                     if ( (((len(mote_structs[mote_id].gradx)) > 0) or ((len(mote_structs[mote_id].grady) > 0))) 
                         and mote_structs[mote_id].in_game != 1):
                         # add it to list of game ready hats
@@ -492,7 +553,6 @@ def receive():
                             listBox_processor(mote_id)
 
                         if(len(game_ready_hats) > 1):
-                            print "before chekcing_bow_time " + (str)(game_ready_hats[0])
                             if (check_same_time_bow(game_ready_hats) == 1):
                                 # start game
                                 # thread off
@@ -552,11 +612,21 @@ def activity_check():
 def game_1(place_in_game_man):
     # run till someone losses
     global global_time
+    global global_led_track
+    global global_audio_track
     
     random_led_track = make_led_track(global_time,20)
     random_audio_track = make_audio_track(global_time,20)
+
+    game_man.all_game_threads[place_in_game_man].ledtrack = copy.copy(global_led_track)
+    game_man.all_game_threads[place_in_game_man].audiotrack = copy.copy(global_audio_track)
+
+    #print "threads copy led: " +(str)(game_man.all_game_threads[place_in_game_man].ledtrack)
+    #print "threads copy audio:" + (str)(game_man.all_game_threads[place_in_game_man].audiotrack)
+
+    # add 
     
-    print "the average globaltime is: " + (str)(get_average_global_time())
+    game_start_time = global_time
 
     for blaa in game_man.all_game_threads[place_in_game_man].game_motes:
         address = "fec0::" + (str)(blaa.id[0])
@@ -583,11 +653,37 @@ def game_1(place_in_game_man):
         mote_structs[blaa.id[0]].game_status = "Waiting"
 
     # process score
+    # 
+    check_val = 0
+    time_add = 0
+    relative_score = 0
+    achieved_score = 0
     for blaa in game_man.all_game_threads[place_in_game_man].game_motes:
-        mote_structs[blaa.id[0]].score += blaa.id[0]
+        # if the length of the gradz array is not 0
+        time_add = global_time
+        print "NEXT HAT"
+        relative_score = 0
+        if( (len(blaa.gradz) != 0) ):
+            # then for all elements of large grad in the array
+            for temp in blaa.gradz:
+                # check if they were done when the sound was on (well slightly after)
+                for temp2 in range(0,len(game_man.all_game_threads[place_in_game_man].audiotrack),2):
+                    check_val = (game_man.all_game_threads[place_in_game_man].audiotrack[temp2][0] + time_add - 20000)
+                    print check_val
+                    # if temp2 timestamp + 500 > temp timestamp and temp2 timestamp - 500 < temp timestamp then match 
+                    print "comparing " + (str)(temp[0]) + " to: " + (str)(check_val + 500)
+                    if ( ((check_val + 500) > temp[0]) and ((check_val < temp[0] + 500))):
+                        # match
+                        relative_score += 1
+                        print "Match Z Score: " + (str)(relative_score)
+                        break
+
+        mote_structs[blaa.id[0]].score += relative_score
         mote_structs[blaa.id[0]].in_game = 0
         mote_structs[blaa.id[0]].delete_data()
         listBox_processor(blaa.id[0])
+        
+    
                      
 # mainloop
 
