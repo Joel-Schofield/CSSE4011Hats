@@ -35,6 +35,9 @@ struct radio_msg_send {
 	// TOS_ID
 	uint8_t id;
 
+	//time of send.
+	uint32_t globalTime;
+
 	// acceldata
 	uint16_t dataxvar[100];
 	uint16_t datayvar[100];
@@ -65,8 +68,8 @@ struct {
 
 
 uint8_t redsTest[] = {255, 0, 255, 0, 255};
-uint8_t greensTest[] = {0, 255, 255, 0, 0};
-uint8_t bluesTest[] = {0, 0, 0, 255, 255};
+uint8_t greensTest[] = {0, 255, 0, 255, 0};
+uint8_t bluesTest[] = {0, 0, 0, 0, 0};
 
 module ProjectC {
 	uses {
@@ -100,6 +103,9 @@ module ProjectC {
 		interface Timer<TMilli> as LedTrackTimer;
 		interface Leds;
 		interface RgbLed;
+
+		//gyro
+		//interface Gyro;
 
 		//audio
 		interface Timer<TMilli> as AudTrackTimer;
@@ -253,7 +259,14 @@ module ProjectC {
 				currLedTrack.ledEventCnt = 0; //ready to play the newest led track!
 
 				//TODO: replace oneshot time with starttime parsed in command. (needs globalTime implemented).
-				call LedTrackTimer.startOneShot(0); 
+
+				call GlobalTime.getGlobalTime(&refGlobalTime);
+
+				if (header.startTime > refGlobalTime) //only delay if startime is past current global time
+					call LedTrackTimer.startOneShot(header.startTime - refGlobalTime); 
+				else
+					call LedTrackTimer.startOneShot(0);
+
 			}
 
 			else if (header.commandId == CMD_AUDIO_TRACK) {
@@ -276,34 +289,21 @@ module ProjectC {
 				for (i=0; i < 50; i++)
 					printf("%02x:", ptr[i]);
 
-				/*
-				printf("\n\r")
-				printf("datalen: %d\n\r", header.dataLength);
-				printf("datalen: %d\n\r", header.dataLength);
-				*/
-
 				currAudTrack.audEventLen = ev;
 				currAudTrack.audEventCnt = 0; //ready to play the newest audio track!
 
 				//TODO: replace oneshot time with starttime parsed in command. (needs globalTime implemented).
-				call AudTrackTimer.startOneShot(0); 
+
+				call GlobalTime.getGlobalTime(&refGlobalTime);
+
+				if (header.startTime > refGlobalTime) //only delay if startime is past current global time
+					call AudTrackTimer.startOneShot(header.startTime - refGlobalTime); 
+				else
+					call AudTrackTimer.startOneShot(0);
+
 			}
 
 		}
-
-		/*
-		// check it is the correct length
-		if(len == sizeof(msg))
-		{
-			memcpy(&msg,payload,sizeof(msg));
-
-			// change the led colour
-			printf("game ID: %u sound ID: %u R: %u G: %u B: %u\n\r",
-				msg.gameId,msg.soundId,msg.red,msg.green,msg.blue);
-			call RgbLed.setColorRgb(msg.red, msg.green, msg.blue);
-			printfflush();
-		}
-		*/
 	}
 
 
@@ -326,14 +326,16 @@ module ProjectC {
 		call Leds.led0Toggle();
 
 		if (!timerStarted) {
-			call StatusTimer.startPeriodic(5000);
+			call StatusTimer.startPeriodic(4000); 
 			timerStarted = TRUE;
 
 			currLedTrack.ledTimes[0] = 0;
-			currLedTrack.ledTimes[1] = 200;
-			currLedTrack.ledTimes[2] = 400;
+			currLedTrack.ledTimes[1] = 1000;
+			currLedTrack.ledTimes[2] = 2000;
+			currLedTrack.ledTimes[3] = 3000;
 
-			currLedTrack.ledEventLen = 3;
+			currLedTrack.ledEventLen = 4;
+			currLedTrack.ledEventCnt = 0;
 
 			for (i=0; i < 5; i++) {
 				currLedTrack.ledColours[0][i][0] = 255;
@@ -347,14 +349,19 @@ module ProjectC {
 				currLedTrack.ledColours[1][i][2] = 0;
 			}
 			for (i=0; i < 5; i++) {
-				currLedTrack.ledColours[2][i][0] = 0;
+				currLedTrack.ledColours[2][i][0] = 255;
 				currLedTrack.ledColours[2][i][1] = 0;
-				currLedTrack.ledColours[2][i][2] = 255;
+				currLedTrack.ledColours[2][i][2] = 0;
+			}
+			for (i=0; i < 5; i++) {
+				currLedTrack.ledColours[3][i][0] = 0;
+				currLedTrack.ledColours[3][i][1] = 255;
+				currLedTrack.ledColours[3][i][2] = 0;
 			}
 
 			//call RgbLed.setMultRgb(redsTest, greensTest, bluesTest, NUM_LEDS);
 
-			call LedTrackTimer.startOneShot(0);
+			//call LedTrackTimer.startOneShot(0);
 
 			//Example:
 			//1) Initialize pwm:
@@ -389,8 +396,19 @@ module ProjectC {
 			currAudTrack.audEventLen = 5;
 			currAudTrack.audEventCnt = 0;
 
-			call AudTrackTimer.startOneShot(0);
+			//call AudTrackTimer.startOneShot(0);
 			
+		}
+
+		if (call GlobalTime.getGlobalTime(&refGlobalTime) == SUCCESS) {
+			call AudTrackTimer.startOneShot(0);
+			printf("time is synced %lu!\n\r", refGlobalTime);
+		}
+		else {
+			printf("time is not synced :(\n\r");
+				currLedTrack.ledEventCnt = 0; //reset and play again
+			call LedTrackTimer.startOneShot(0); //play the "not synced" track.
+
 		}
 	}
 
@@ -508,6 +526,12 @@ module ProjectC {
 				
 				// pack the data
 				msg_send.id = TOS_NODE_ID;
+
+				if (call GlobalTime.getGlobalTime(&refGlobalTime) == SUCCESS)
+					msg_send.globalTime = refGlobalTime;
+				else
+					msg_send.globalTime = 0;
+
 				memcpy(&msg_send.dataxvar,datax,sizeof(datax));
 				memcpy(&msg_send.datayvar,datay,sizeof(datay));
 				memcpy(&msg_send.datazvar,dataz,sizeof(dataz));

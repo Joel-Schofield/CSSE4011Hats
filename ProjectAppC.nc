@@ -39,6 +39,10 @@ implementation {
     ProjectC.Leds -> LedsC;
     ProjectC.RgbLed -> RgbLedC;
 
+    //gyro
+    //components new GyroC();
+    //ProjectC.Gyro -> GyroC;
+
     //audio driver
     components new TimerMilliC() as AudTrackTimer;
     ProjectC.AudTrackTimer -> AudTrackTimer;
