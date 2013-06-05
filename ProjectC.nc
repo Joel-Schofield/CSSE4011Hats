@@ -412,11 +412,25 @@ module ProjectC {
 
 				syncedAtLeastOnce = 1;
 			}
+
 		}
 		else {
 			printf("time is not synced :(\n\r");
 			currLedTrack.ledEventCnt = 0; //reset and play again
 			call LedTrackTimer.startOneShot(0); //play the default "not synced" track.
+
+			if (!syncedAtLeastOnce) { //send a data stream packet containing null info to let the PC know the node is active
+
+				msg_send.id = TOS_NODE_ID;
+
+				msg_send.globalTime = 0;
+
+				memset(&msg_send.dataxvar,0,sizeof(datax));
+				memset(&msg_send.datayvar,0,sizeof(datay));
+				memset(&msg_send.datazvar,0,sizeof(dataz));
+
+				call Status.sendto(&send_dest, &msg_send, sizeof(msg_send));
+			}
 		}
 	}
 
