@@ -18,10 +18,12 @@ import copy
 global global_time
 global global_led_track
 global global_audio_track
+global game_ready_hats
 
 global_time = 0
 global_audio_track = []
 global_led_track = []
+game_ready_hats = []
 
 # gui varables
 redval = 0
@@ -499,6 +501,18 @@ def check_same_time_bow(hats_array):
         print "No Match"
         return 0
 
+def game_ready_hats_timeout():
+    global game_ready_hats
+    time.sleep(4)
+
+    if(len(game_ready_hats) == 1):
+        for temp in game_ready_hats:
+            mote_structs[temp.id[0]].game_status = "Waiting"
+            listBox_processor(temp.id[0])
+        del game_ready_hats[:]
+        game_ready_hats = []
+
+
 # receive function for getting data from the zig mote
 """ receive data from the motes """
 def receive():
@@ -506,6 +520,7 @@ def receive():
     UDPSockReceive.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     UDPSockReceive.bind(("",4321))
     datapos = 0
+    global game_ready_hats
 
     game_ready_hats = []
 
@@ -551,6 +566,9 @@ def receive():
                             mote_structs[mote_id].game_status = "Ready"
                             game_ready_hats.append(mote_structs[mote_id])
                             listBox_processor(mote_id)
+                            # thread off a callback to delete it from game ready hat
+                            t = Thread(target = game_ready_hats_timeout)
+                            t.start()
 
                         if(len(game_ready_hats) > 1):
                             if (check_same_time_bow(game_ready_hats) == 1):
@@ -701,21 +719,18 @@ game_man = game_manager()
 top = Tk()
 top.wm_title("CSSE4011 Super Awsome iGame iHats")
 
-f = Figure(figsize=(3,2), dpi=100)
+f = Figure(figsize=(3,2.1), dpi=100)
 a = f.add_subplot(111)
 t = arange(0.0,3.0,0.01)
 s = sin(2*pi*t)
 
 a.plot([1,2,3,4,5,6,7,8,9,10,0,4,2,8,20])
 
-Moteselectframe = Frame(top)
-Moteselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
-
 Gameidselectframe = Frame(top)
 Gameidselectframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
 
 Scoreframe = Frame(top)
-Scoreframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
+Scoreframe.pack(side = TOP, padx = 10, pady = 0, fill = X)
 
 Graphframe = Frame(top)
 Graphframe.pack(side = TOP, padx = 10, pady = 10, fill = X)
@@ -727,15 +742,6 @@ Buttonframe.pack(side = BOTTOM, padx = 10, fill = X)
 canvas = FigureCanvasTkAgg(f, master = Graphframe)
 #toolbar = NavigationToolbar2TkAgg( canvas, Graphframe)
 
-# Mote ID frame
-Sendl = Label(Moteselectframe, text = "TOS__ID: ")
-Entryid = Entry(Moteselectframe, bd = 5)
-Entryid.insert(0,"fec0::")
-
-# pack them
-Sendl.pack(side = LEFT, anchor = CENTER)
-Entryid.pack(side = RIGHT, anchor = CENTER)
-
 # Game ID frame
 Gameidl = Label(Gameidselectframe, text = "Game ID: ")
 Entrygameid = Entry(Gameidselectframe, bd = 5)
@@ -744,7 +750,6 @@ Entrygameid.insert(0,"1")
 #pack them
 Gameidl.pack(side = LEFT)
 Entrygameid.pack(side = RIGHT)
-
 
 # score frame
 DATA_FORMAT = "{0:<14}{1:<12}{2:<16}{3:<10}"
@@ -758,9 +763,11 @@ canvas.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 #toolbar.update()
 canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand = True)
 
+"""
 # Button
 B = Button(Buttonframe, text ="send", command = send, width = 20)
 B.pack(side = TOP, pady = 10)
+"""
 
 # start thread
 t = Thread(target=receive)
