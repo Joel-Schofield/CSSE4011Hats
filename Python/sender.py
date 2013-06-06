@@ -89,6 +89,7 @@ class mote:
         self.state = ""
         self.game_status = "Waiting"
         self.in_game = 0
+        self.sequency_number = 0
 
     """ change the score """
     def increment_score(self, x):
@@ -126,8 +127,10 @@ class mote:
         print "### mote: " + (str)(mote_id[0]) + " ###"
         self.id = mote_id
 
+        self.sequency_number = unpack("B",socket_data[1])
+
         # mote time
-        time = unpack("I",socket_data[1:5])
+        time = unpack("I",socket_data[2:6])
         if(self.in_game != 1):
             self.time = time[0]
 
@@ -147,18 +150,16 @@ class mote:
         if(self.game_status == "Reconnect!"):
             self.game_status = "Waiting"
 
-        #self.time += 1
-
         # accelerometer data
-        for temp in range(5,205,2):
+        for temp in range(6,206,2):
             self.datax.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
         #print self.datax
 
-        for temp in range(205,405,2):
+        for temp in range(206,406,2):
             self.datay.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
         #print self.datay
 
-        for temp in range(405,605,2):
+        for temp in range(406,606,2):
             self.dataz.append((int)(unpack("h",socket_data[temp:(temp + 2)])[0]) )
         #print self.dataz
         
@@ -315,10 +316,12 @@ def make_led_track(starting_global_time,number_of_events):
         for temp in range (0,5):
 
             if(random_colour == 1):
+                # red
                 timestamp_led_combo.append(255)
                 timestamp_led_combo.append(0)
                 timestamp_led_combo.append(0)
             else:
+                # Green
                 timestamp_led_combo.append(0)
                 timestamp_led_combo.append(255)
                 timestamp_led_combo.append(0)
@@ -530,80 +533,88 @@ def receive():
         else:
             mote_id = unpack("B",data[0])[0]
             # print "\nReceived message from " + (str)(mote_id)
+            # 
+            
+            # sequency number check
+            packet_sequency = unpack("B",data[1])
+            print "sequency of packet: " + (str)(packet_sequency[0]) + " struct sequency: " + (str)(mote_structs[mote_id].sequency_number)
+            if(mote_structs[mote_id].sequency_number == packet_sequency[0]):
+                null = 0
+            else:
 
-            # process all the data here
-            if (mote_structs[mote_id].in_game == 0):
-                mote_structs[mote_id].delete_data()
-            mote_structs[mote_id].decode(data)
-            mote_structs[mote_id].calc_grad()
-            mote_structs[mote_id].draw()
+                # process all the data here
+                if (mote_structs[mote_id].in_game == 0):
+                    mote_structs[mote_id].delete_data()
+                mote_structs[mote_id].decode(data)
+                mote_structs[mote_id].calc_grad()
+                mote_structs[mote_id].draw()
 
-            listBox_processor(mote_id)
+                listBox_processor(mote_id)
 
-            if(int(Entrygameid.get()) == 1):
-                if(mote_structs[mote_id].game_status == "Waiting"):
-                   
-                    # rewrite this section........
-                    # check for concurrent bows here
+                if(int(Entrygameid.get()) == 1):
+                    if(mote_structs[mote_id].game_status == "Waiting"):
+                       
+                        # rewrite this section........
+                        # check for concurrent bows here
 
-                    # if there is some grad changed
-                    if ( (((len(mote_structs[mote_id].gradx)) > 0) or ((len(mote_structs[mote_id].grady) > 0))) 
-                        and mote_structs[mote_id].in_game != 1):
-                        # add it to list of game ready hats
-                        # this list when there is more then 1 hat will begin a game
-                        # check that it hasn't already been added to this array first
-                        try:
-                            # this will give i a value if it is in the list already
-                            i = game_ready_hats.index(mote_structs[mote_id])
-                            print "hat " + (str)(mote_id) + " already ready to start game"
-                            mote_structs[mote_id].game_status = "Ready"
-                        except ValueError:
-                            # not in list
-                            i = -1 
-                            print "hat " + (str)(mote_id) + " moved to ready list"
-                            mote_structs[mote_id].game_status = "Ready"
-                            game_ready_hats.append(mote_structs[mote_id])
-                            listBox_processor(mote_id)
-                            # thread off a callback to delete it from game ready hat
-                            t = Thread(target = game_ready_hats_timeout)
-                            t.start()
+                        # if there is some grad changed
+                        if ( (((len(mote_structs[mote_id].gradx)) > 0) or ((len(mote_structs[mote_id].grady) > 0))) 
+                            and mote_structs[mote_id].in_game != 1):
+                            # add it to list of game ready hats
+                            # this list when there is more then 1 hat will begin a game
+                            # check that it hasn't already been added to this array first
+                            try:
+                                # this will give i a value if it is in the list already
+                                i = game_ready_hats.index(mote_structs[mote_id])
+                                print "hat " + (str)(mote_id) + " already ready to start game"
+                                mote_structs[mote_id].game_status = "Ready"
+                            except ValueError:
+                                # not in list
+                                i = -1 
+                                print "hat " + (str)(mote_id) + " moved to ready list"
+                                mote_structs[mote_id].game_status = "Ready"
+                                game_ready_hats.append(mote_structs[mote_id])
+                                listBox_processor(mote_id)
+                                # thread off a callback to delete it from game ready hat
+                                t = Thread(target = game_ready_hats_timeout)
+                                t.start()
 
-                        if(len(game_ready_hats) > 1):
-                            if (check_same_time_bow(game_ready_hats) == 1):
-                                # start game
-                                # thread off
-                                # should make a list of threads
-                                for temp in game_ready_hats:
-                                    temp.game_status = "In Game:" + (str)(game_man.number_of_threads)
-                                    listBox_processor(temp.id[0])
-                                    mote_structs[temp.id[0]].in_game = 1
+                            if(len(game_ready_hats) > 1):
+                                if (check_same_time_bow(game_ready_hats) == 1):
+                                    # start game
+                                    # thread off
+                                    # should make a list of threads
+                                    for temp in game_ready_hats:
+                                        temp.game_status = "In Game:" + (str)(game_man.number_of_threads)
+                                        listBox_processor(temp.id[0])
+                                        mote_structs[temp.id[0]].in_game = 1
 
 
-                                t = game_thread(Thread(target = game_1 , args=(game_man.number_of_threads,)) , game_man.number_of_threads )
-                                game_man.number_of_threads += 1
+                                    t = game_thread(Thread(target = game_1 , args=(game_man.number_of_threads,)) , game_man.number_of_threads )
+                                    game_man.number_of_threads += 1
 
-                                # fill data
-                                for temp in game_ready_hats:
-                                    t.game_motes.append(copy.copy(temp))
+                                    # fill data
+                                    for temp in game_ready_hats:
+                                        t.game_motes.append(copy.copy(temp))
 
-                                # delete game ready hats
-                                del game_ready_hats[:]
-                                game_ready_hats = []
+                                    # delete game ready hats
+                                    del game_ready_hats[:]
+                                    game_ready_hats = []
 
-                                # append the game thread to the manager
-                                game_man.all_game_threads.append(copy.copy(t))
+                                    # append the game thread to the manager
+                                    game_man.all_game_threads.append(copy.copy(t))
 
-                                game_man.all_game_threads[game_man.number_of_threads - 1].thread_id.start()
+                                    game_man.all_game_threads[game_man.number_of_threads - 1].thread_id.start()
 
-                                # start the game thread
-                                # t.thread_id.start()
-                            else:
-                                # if not delete the game_ready_hats, revert status
-                                for temp in game_ready_hats:
-                                    mote_structs[temp.id[0]].game_status = "Waiting"
-                                    listBox_processor(temp.id[0])
-                                del game_ready_hats
-                                game_ready_hats = []
+                                    # start the game thread
+                                    # t.thread_id.start()
+                                else:
+                                    # if not delete the game_ready_hats, revert status
+                                    for temp in game_ready_hats:
+                                        mote_structs[temp.id[0]].game_status = "Waiting"
+                                        listBox_processor(temp.id[0])
+                                    del game_ready_hats
+                                    game_ready_hats = []
         print "finish @: " + (str)(global_time)
 
 
@@ -696,7 +707,9 @@ def game_1(place_in_game_man):
                     # if temp2 timestamp + 500 > temp timestamp and temp2 timestamp - 500 < temp timestamp then match 
                     print "comparing " + (str)(temp[0]) + " to: " + (str)(check_val + 500)
                     if ( ((check_val + 500) > temp[0]) and ((check_val < temp[0] + 500))):
-                        # match
+                        # match but now make sure they match the leds
+                        
+                        
                         relative_score += 1
                         print "Match Z Score: " + (str)(relative_score)
                         break
