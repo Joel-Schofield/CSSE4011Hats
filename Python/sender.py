@@ -14,11 +14,13 @@ from threading import Thread
 import time
 import random
 import copy
+import datetime
 
 global global_time
 global global_led_track
 global global_audio_track
 global game_ready_hats
+global lastupdatetime
 
 global_time = 0
 global_audio_track = []
@@ -53,6 +55,14 @@ hat_dip_level = 0
 game_ready_hats = []
 game_threads = []
 thread_number = 0
+
+def updateGlobalTime():
+    global lastupdatetime
+    global global_time
+    a = datetime.datetime.now()
+    c = a - lastupdatetime;
+    global_time = global_time + (c.days * 24 * 60 * 60 + c.seconds) * 1000 + c.microseconds / 1000.0
+    lastupdatetime = a;
 
 def globaltimekeeper():
     global global_time
@@ -109,6 +119,7 @@ class mote:
     def decode(self,socket_data):
 
         global global_time
+        global lastupdatetime
 
         # mote id
         mote_id = unpack("B",socket_data[0])
@@ -119,7 +130,6 @@ class mote:
         time = unpack("I",socket_data[1:5])
         if(self.in_game != 1):
             self.time = time[0]
-        #print "time: " + (str)(self.time)
 
         if(self.time == 0):
             self.state = "Syncing"
@@ -127,8 +137,12 @@ class mote:
             self.state = "Active"
             if (global_time == 0):
                 global_time = self.time
+                lastupdatetime = datetime.datetime.now()
                 t = Thread(target = globaltimekeeper)
-                t.start() 
+                t.start()
+            else:
+                lastupdatetime = datetime.datetime.now()
+                global_time = self.time 
 
         if(self.game_status == "Reconnect!"):
             self.game_status = "Waiting"
@@ -162,7 +176,11 @@ class mote:
         grad_tuple = ()
         timestamp_grad = 0
         timestamp_grad = self.time
-        for temp in range(0,(len(self.datax)-5),grad_cal_distance):
+
+        for temp in range(0,len(self.gradz)):
+            self.gradz.pop()
+
+        for temp in range(0,(len(self.dataz)-5),grad_cal_distance):
             
             # x components
             value = ((self.datax[temp] - self.datax[temp+grad_cal_distance])/(grad_cal_distance))
@@ -183,7 +201,7 @@ class mote:
             if (value > hat_dip_level):
                 grad_tuple = (timestamp_grad,value)
                 print "gradz above limit: " + (str)(grad_tuple)
-                self.gradz.append(copy.copy(grad_tuple))
+                self.gradz.append(grad_tuple)
 
             # increment timestamp
             timestamp_grad = (timestamp_grad + (250))
@@ -290,47 +308,22 @@ def make_led_track(starting_global_time,number_of_events):
     # format [timestamp] [led1] [led2] [led3] [led4] [led5] ....
     tracktime += 100
 
-    custom_start = []
-
-    # add predefined header
-    custom_start.append(tracktime)
-
-    for temp2 in range (0,15):
-        custom_start.append(0)
-
-    for temp2 in range (1,16,3):
-        custom_start[temp2] = 255
-
-    custom_start.append(tracktime+100)
-
-    for temp2 in range (0,15):
-        custom_start.append(0)
-
-    for temp2 in range (17,32,3):
-        custom_start[temp2] = 0
-
-    custom_start.append(tracktime+200)
-
-    for temp2 in range (0,15):
-        custom_start.append(0)
-
-    for temp2 in range (33,48,3):
-        custom_start[temp2] = 255
-
     for temp2 in range (0,(datalength/19)):
         timestamp_led_combo.append(tracktime)
         tracktime += (400 + random.randint(1,1000))
-        for temp in range (0,16):
-            random_colour = 0
-            random_colour = random.randint(0,255)
-            if(random_colour < 127):
-                random_colour = 0
+        random_colour = random.randint(0,2)
+        for temp in range (0,5):
+
+            if(random_colour == 1):
+                timestamp_led_combo.append(255)
+                timestamp_led_combo.append(0)
+                timestamp_led_combo.append(0)
             else:
-                random_colour = 255
-            timestamp_led_combo.append(random_colour)
-        ledtrack.append(timestamp_led_combo[:])
+                timestamp_led_combo.append(0)
+                timestamp_led_combo.append(255)
+                timestamp_led_combo.append(0)
         
-        # delete the combo
+        ledtrack.append(timestamp_led_combo[:])
         del timestamp_led_combo[:]
 
     # pack the list
@@ -523,6 +516,8 @@ def receive():
     global game_ready_hats
     global global_time
 
+    updateGlobalTime()
+
     game_ready_hats = []
 
     while True:
@@ -537,7 +532,7 @@ def receive():
             # print "\nReceived message from " + (str)(mote_id)
 
             # process all the data here
-            if (mote_structs[mote_id].in_game != 1):
+            if (mote_structs[mote_id].in_game == 0):
                 mote_structs[mote_id].delete_data()
             mote_structs[mote_id].decode(data)
             mote_structs[mote_id].calc_grad()
@@ -636,6 +631,10 @@ def game_1(place_in_game_man):
     global global_time
     global global_led_track
     global global_audio_track
+
+    updateGlobalTime()
+
+    print "running game 1 wohoooo in thread" + (str)(place_in_game_man)
     
     random_led_track = make_led_track(global_time,20)
     random_audio_track = make_audio_track(global_time,20)
@@ -662,9 +661,10 @@ def game_1(place_in_game_man):
         UDPSock.send(random_audio_track)
         time.sleep(0.05)
 
-    for blaa in range(0,4):
-        print "running game 1 wohoooo in thread" + (str)(place_in_game_man)
-        time.sleep((random.randint(0,100))/10)
+    for temp in global_audio_track:
+        print temp
+    
+    time.sleep(global_audio_track[-1][0] / 1000)
 
     # game end
     # change the motes back
@@ -684,14 +684,15 @@ def game_1(place_in_game_man):
         # if the length of the gradz array is not 0
         time_add = game_start_time
         print "NEXT HAT"
+        print "Motes z grads: " + (str)(blaa.gradz)
         relative_score = 0
         if( (len(blaa.gradz) != 0) ):
             # then for all elements of large grad in the array
             for temp in blaa.gradz:
                 # check if they were done when the sound was on (well slightly after)
-                for temp2 in range(0,len(game_man.all_game_threads[place_in_game_man].audiotrack),2):
+                for temp2 in range(1,len(game_man.all_game_threads[place_in_game_man].audiotrack),2):
                     check_val = (game_man.all_game_threads[place_in_game_man].audiotrack[temp2][0] + time_add)
-                    print check_val
+                    print (str)(check_val) + " frequency: " + (str)(game_man.all_game_threads[place_in_game_man].audiotrack[temp2][1])
                     # if temp2 timestamp + 500 > temp timestamp and temp2 timestamp - 500 < temp timestamp then match 
                     print "comparing " + (str)(temp[0]) + " to: " + (str)(check_val + 500)
                     if ( ((check_val + 500) > temp[0]) and ((check_val < temp[0] + 500))):
@@ -702,17 +703,15 @@ def game_1(place_in_game_man):
 
         mote_structs[blaa.id[0]].score += relative_score
         mote_structs[blaa.id[0]].in_game = 0
-        mote_structs[blaa.id[0]].delete_data()
         listBox_processor(blaa.id[0])
-        
-    
-                     
+                  
 # mainloop
 
 # initilise the structues
 grad_cal_distance = 5
 hat_dip_level = 7
 thread_number = 0
+lastupdatetime = datetime.datetime.now()
 motenumber = 0
 for temp in range(0,32):
     mote_structs.append(mote())
