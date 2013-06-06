@@ -120,6 +120,29 @@ class mote:
         del self.grady[:]
         del self.gradz[:]
 
+    """transmit the users current score to be displayed on the hat."""
+    def send_victories_track(self):
+
+        # put header in here
+        track_data = pack("IIQQ",4294967295,1,0,19)
+
+        #timestamp.
+        track_data += pack("I", 0)
+
+        for i in range(0, 5):
+            if (i < self.victories):
+                track_data += pack("B", 0)
+                track_data += pack("B", 255)
+                track_data += pack("B", 0)
+            else:
+                track_data += pack("B", 255)
+                track_data += pack("B", 0)
+                track_data += pack("B", 0)
+
+        UDPSock = socket(AF_INET6,SOCK_DGRAM)
+        UDPSock.connect(("fec0::" + (str)(self.id[0]), 1234))
+        UDPSock.send(track_data)
+
     """ decode the string received over the udp socket """
     def decode(self,socket_data):
 
@@ -295,33 +318,6 @@ def send():
         """
     send_data = 0
 
-"""transmit the users current score to be displayed on the hat."""
-def send_victories_track():
-
-    # put header in here
-    track_data = pack("IIQQ",4294967295,1,0, (4 + 3*15) )
-
-    #timestamp.
-    track_data += pack("I", 0)
-
-    for i in range(0, 5):
-        if (i <= self.victories):
-            track_data += pack("B", 255)
-            track_data += pack("B", 0)
-            track_data += pack("B", 0)
-        else:
-            track_data += pack("B", 0)
-            track_data += pack("B", 255)
-            track_data += pack("B", 0)
-
-    UDPSock = socket(AF_INET6,SOCK_DGRAM)
-    UDPSock.connect("fec0::" + (str)(self.id[0]), 1234)
-    UDPSock.send(track_data)
-
-
-
-
-
 """ starting_global_time is only for testing number_of_events is important """
 def make_led_track(starting_global_time,number_of_events,mote):
     global_time = starting_global_time
@@ -382,7 +378,7 @@ def make_led_track(starting_global_time,number_of_events,mote):
     del ledtrack[:]
     return send_data
 
-def make_audio_track(starting_global_time,number_of_events,mote):
+def make_audio_track(starting_global_time,number_of_events,mote,play_frequency):
     global_time = starting_global_time
     tracktime = 0
     timestamp_audio_combo = []
@@ -416,7 +412,7 @@ def make_audio_track(starting_global_time,number_of_events,mote):
             timestamp_audio_combo.append(0)
         else:
             if(on_off_switch == 1):
-                timestamp_audio_combo.append(20000)
+                timestamp_audio_combo.append(play_frequency)
                 mote_structs[mote].audiotrack_timestamp.append(tracktime)
                 on_off_switch = 0
             else:
@@ -700,11 +696,11 @@ def game_1(place_in_game_man):
 
     # first set
     random_led_track.append(make_led_track(global_time,20,mote1))
-    random_audio_track.append(make_audio_track(global_time,20,mote1))
+    random_audio_track.append(make_audio_track(global_time,20,mote1,20000))
 
     # second set
     random_led_track.append(make_led_track(global_time,20,mote2))
-    random_audio_track.append(make_audio_track(global_time,20,mote2))
+    random_audio_track.append(make_audio_track(global_time,20,mote2,18000))
 
     # copy them accros
     game_man.all_game_threads[place_in_game_man].ledtrack = global_led_track[:]
@@ -769,53 +765,24 @@ def game_1(place_in_game_man):
     # game end
     # change the motes back
 
-    score1 = process_score(mote1,game_start_time)
-    score2 = process_score(mote2,game_start_time)
+    score1 = process_score(mote1,game_start_time,mote2)
+    score2 = process_score(mote2,game_start_time,mote1)
 
     if (score1 > score2):
         mote_structs[mote1].victories += 1
-    else:
+    elif (score2 > score1):
         mote_structs[mote2].victories += 1
 
     mote_structs[mote1].send_victories_track()
     mote_structs[mote2].send_victories_track()
-
-"""
-    # process score
-    # mpte 1
-    check_val = 0
-    time_add = 0
-    relative_score = 0
-    achieved_score = 0
-
-    time_add = game_start_time
-    print "NEXT HAT"
-    print "Motes z grads: " + (str)(mote_structs[mote1].gradz)
-    relative_score = 0
-    if( (len(mote_structs[mote1].gradz) != 0) ):
-        # then for all elements of large grad in the array
-        for temp in mote_structs[mote1].gradz:
-            # check if they were done when the sound was on (well slightly after)
-            for temp2 in mote_structs[mote1].audiotrack_timestamp:
-                check_val = (temp2 + time_add)
-                print "comparing " + (str)(temp[0]) + " to: " + (str)(check_val + 500)
-                if ( ((check_val + 500) > temp[0]) and ((check_val < temp[0] + 500))):
-                    # match but now make sure they match the leds
-                    
-                    relative_score += 1
-                    print "Match Z Score: " + (str)(relative_score)
-                    break
-
-        mote_structs[mote1].score += relative_score
-        mote_structs[mote1].in_game = 0
-        listBox_processor(mote1)
-"""
           
-def process_score(moteid,game_start_time):
+def process_score(moteid,game_start_time,oponent_mote_id):
     check_val = 0
     time_add = 0
     relative_score = 0
     achieved_score = 0
+
+    mote_structs[moteid].score = 0
 
     time_add = game_start_time
     print "NEXT HAT"
@@ -824,20 +791,27 @@ def process_score(moteid,game_start_time):
     if( (len(mote_structs[moteid].gradz) != 0) ):
         # then for all elements of large grad in the array
         for temp in mote_structs[moteid].gradz:
+            if((temp[0]) < time_add + 8000):
+                continue
             # check if they were done when the sound was on (well slightly after)
-            for temp2 in mote_structs[moteid].audiotrack_timestamp:
+            for temp2 in mote_structs[oponent_mote_id].audiotrack_timestamp:
                 check_val = (temp2 + time_add)
-                print "comparing " + (str)(temp[0]) + " to: " + (str)(check_val + 500)
-                if ( ((check_val + 500) > temp[0]) and ((check_val < temp[0] + 500))):
+                if ( (temp[0] >= check_val) and ((temp[0] <= (check_val + 500))) ):
                     # match but now make sure they match the leds
+                    for temp3 in range(0,len(mote_structs[oponent_mote_id].ledtrack_timestamp) - 1):
+                        if( (temp[0] > (mote_structs[oponent_mote_id].ledtrack_timestamp[temp3] + time_add))
+                            and (temp[0] < (mote_structs[oponent_mote_id].ledtrack_timestamp[temp3+1] + time_add)) 
+                            and (mote_structs[oponent_mote_id].ledtrack_colour[temp3] == 0)):
                     
-                    relative_score += 1
-                    print "Match Z Score: " + (str)(relative_score)
+                            relative_score += 1
+                            print "Match Z Score: " + (str)(relative_score)
+                            break
                     break
 
 
     mote_structs[moteid].score += relative_score
     mote_structs[moteid].in_game = 0
+    time.sleep(.05)
     listBox_processor(moteid)
 
     mote_structs[moteid].state = "Active"
