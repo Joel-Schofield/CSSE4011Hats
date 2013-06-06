@@ -540,14 +540,16 @@ module ProjectC {
 				// reset the data
 				datazplace = 0;
 				// send the data
-				printf("sending accelerometer\n\r");
-				printfflush();
+			
 				
 				// pack the data
 				msg_send.id = TOS_NODE_ID;
 
-				if (call GlobalTime.getGlobalTime(&refGlobalTime) == SUCCESS)
+				if (call GlobalTime.getGlobalTime(&refGlobalTime) == SUCCESS) {
 					msg_send.globalTime = refGlobalTime;
+					printf("sending accelerometer @%lu for node:%d\n\r", refGlobalTime, TOS_NODE_ID);
+					printfflush();
+				}
 				else
 					msg_send.globalTime = 0;
 
