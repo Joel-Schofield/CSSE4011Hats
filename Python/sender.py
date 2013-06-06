@@ -78,6 +78,7 @@ class mote:
         self.time = 0
         self.game = 0
         self.score = 0
+        self.victories = 0
         self.partners = []
         self.datax = []
         self.datay = []
@@ -293,6 +294,33 @@ def send():
         UDPSock.send(send_data)
         """
     send_data = 0
+
+"""transmit the users current score to be displayed on the hat."""
+def send_victories_track():
+
+    # put header in here
+    track_data = pack("IIQQ",4294967295,1,0, (4 + 3*15) )
+
+    #timestamp.
+    track_data += pack("I", 0)
+
+    for i in range(0, 5):
+        if (i <= self.victories):
+            track_data += pack("B", 255)
+            track_data += pack("B", 0)
+            track_data += pack("B", 0)
+        else:
+            track_data += pack("B", 0)
+            track_data += pack("B", 255)
+            track_data += pack("B", 0)
+
+    UDPSock = socket(AF_INET6,SOCK_DGRAM)
+    UDPSock.connect("fec0::" + (str)(self.id[0]), 1234)
+    UDPSock.send(track_data)
+
+
+
+
 
 """ starting_global_time is only for testing number_of_events is important """
 def make_led_track(starting_global_time,number_of_events,mote):
@@ -741,8 +769,16 @@ def game_1(place_in_game_man):
     # game end
     # change the motes back
 
-    process_score(mote1,game_start_time)
-    process_score(mote2,game_start_time)
+    score1 = process_score(mote1,game_start_time)
+    score2 = process_score(mote2,game_start_time)
+
+    if (score1 > score2):
+        mote_structs[mote1].victories += 1
+    else:
+        mote_structs[mote2].victories += 1
+
+    mote_structs[mote1].send_victories_track()
+    mote_structs[mote2].send_victories_track()
 
 """
     # process score
@@ -806,6 +842,8 @@ def process_score(moteid,game_start_time):
 
     mote_structs[moteid].state = "Active"
     mote_structs[moteid].game_status = "Waiting"
+
+    return relative_score
 
 # mainloop
 
