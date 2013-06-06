@@ -382,9 +382,6 @@ module ProjectC {
 			currAudTrack.audFreqs[0] = 0X1A45;
 			currAudTrack.audFreqs[1] = 0X2045;
 			currAudTrack.audFreqs[2] = 0X2A45;
-			currAudTrack.audFreqs[3] = 0X2045;
-			currAudTrack.audFreqs[3] = 0X1A45;
-			currAudTrack.audFreqs[3] = 0X1A45;
 			currAudTrack.audFreqs[3] = 0X1A45;
 
 			currAudTrack.audTimes[0] = 0;
@@ -405,7 +402,7 @@ module ProjectC {
 
 			printf("time is synced %lu!\n\r", refGlobalTime);
 
-			if (!syncedAtLeastOnce) }
+			if (!syncedAtLeastOnce) {
 				call AdcTimer.startOneShot(5000 - (refGlobalTime % 5000) + TOS_NODE_ID*50 ); //improves times on when the adc transmits.
 				
 				call AudTrackTimer.startOneShot(0);
