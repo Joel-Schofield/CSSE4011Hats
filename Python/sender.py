@@ -225,14 +225,52 @@ class mote:
                 self.grady.append(copy.copy(grad_tuple))
 
             # z compoenents
+            """
             value = ((self.dataz[temp] - self.dataz[temp+grad_cal_distance])/(grad_cal_distance))
             if (value > hat_dip_level):
                 grad_tuple = (timestamp_grad,value)
                 print "gradz above limit: " + (str)(grad_tuple)
                 self.gradz.append(grad_tuple)
+            """
 
             # increment timestamp
             timestamp_grad = (timestamp_grad + (250))
+
+        timestamp_grad = self.time
+        prevNotOverThreshold = 1
+
+        windowSize = 5
+
+        for temp in range(0, len(self.dataz)-windowSize, windowSize):
+
+            maximum = 0;
+            minimum = 10000;
+     
+            for temp2 in range(0, windowSize):
+                
+                if (maximum < self.dataz[temp + temp2]):
+                    maximum = self.dataz[temp+temp2]
+                if (minimum > self.dataz[temp+temp2]):
+                    minimum = self.dataz[temp+temp2]
+     
+            dif = maximum - minimum
+
+            print "dif is: " + (str)(dif)
+            #print "max is: " + (str)(maximum)
+            #print "min is: " + (str)(minimum)
+     
+            grad_tuple = (timestamp_grad,dif)
+     
+            if (dif > 100): #value may need to be calibrated.
+                if (prevNotOverThreshold):
+                    self.gradz.append(grad_tuple)
+                    prevNotOverThreshold = 0
+            elif (dif < 20):
+                prevNotOverThreshold = 1
+     
+            # increment timestamp
+            timestamp_grad = (timestamp_grad + (50 * windowSize))
+
 
     def make_listBox_string(self):
         DATA_FORMAT = "{0:<9}{1:<12}{2:<14}{3:<10}"
@@ -791,8 +829,12 @@ def process_score(moteid,game_start_time,oponent_mote_id):
     if( (len(mote_structs[moteid].gradz) != 0) ):
         # then for all elements of large grad in the array
         for temp in mote_structs[moteid].gradz:
+            
             if((temp[0]) < time_add + 8000):
                 continue
+
+            match = 0
+
             # check if they were done when the sound was on (well slightly after)
             for temp2 in mote_structs[oponent_mote_id].audiotrack_timestamp:
                 check_val = (temp2 + time_add)
@@ -805,8 +847,15 @@ def process_score(moteid,game_start_time,oponent_mote_id):
                     
                             relative_score += 1
                             print "Match Z Score: " + (str)(relative_score)
+
+                            match = 1
+
                             break
+
                     break
+
+            if (match == 0):
+                relative_score -= 1
 
 
     mote_structs[moteid].score += relative_score
