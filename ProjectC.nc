@@ -403,7 +403,7 @@ module ProjectC {
 			printf("time is synced %lu!\n\r", refGlobalTime);
 
 			if (!syncedAtLeastOnce) {
-				call AdcTimer.startOneShot(5000 - (refGlobalTime % 5000) + TOS_NODE_ID*50 ); //improves times on when the adc transmits.
+				call AdcTimer.startOneShot(5000 - (refGlobalTime % 5000) + TOS_NODE_ID*200 ); //improves times on when the adc transmits.
 				
 				call AudTrackTimer.startOneShot(0);
 
